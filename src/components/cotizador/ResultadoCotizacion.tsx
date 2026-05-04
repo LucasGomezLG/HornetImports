@@ -3,22 +3,41 @@ import styles from "./ResultadoCotizacion.module.css";
 
 function usd(valor: number): string {
   return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    style: "currency", currency: "USD",
+    minimumFractionDigits: 2, maximumFractionDigits: 2,
+  }).format(valor);
+}
+
+function ars(valor: number): string {
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency", currency: "ARS",
+    minimumFractionDigits: 0, maximumFractionDigits: 0,
   }).format(valor);
 }
 
 interface Props {
   desglose: CotizacionDesglose;
+  cotizacionId: string | null;
 }
 
-export default function ResultadoCotizacion({ desglose }: Props) {
+export default function ResultadoCotizacion({ desglose, cotizacionId }: Props) {
+  const ctaHref = cotizacionId
+    ? `/registro?cotizacion=${cotizacionId}`
+    : "/registro";
+
   return (
     <div className={styles.card}>
       <div className={styles.header}>
         <h3 className={styles.headerTitle}>Desglose del costo estimado</h3>
+      </div>
+
+      {/* Total en ARS destacado */}
+      <div className={styles.totalHero}>
+        <span className={styles.totalHeroLabel}>Total estimado</span>
+        <span className={styles.totalHeroArs}>{ars(desglose.totalArs)}</span>
+        <span className={styles.totalHeroUsd}>
+          = {usd(desglose.total)} · Dólar blue {ars(desglose.tipoCambio)}
+        </span>
       </div>
 
       <div className={styles.body}>
@@ -31,9 +50,7 @@ export default function ResultadoCotizacion({ desglose }: Props) {
             <tr>
               <td>
                 Flete internacional
-                <span className={styles.subtext}>
-                  {desglose.pesoFacturable} kg facturables
-                </span>
+                <span className={styles.subtext}>{desglose.pesoFacturable} kg facturables</span>
               </td>
               <td>{usd(desglose.costoFlete)}</td>
             </tr>
@@ -59,18 +76,18 @@ export default function ResultadoCotizacion({ desglose }: Props) {
           </tbody>
           <tfoot>
             <tr className={styles.totalRow}>
-              <td>Total estimado en USD</td>
+              <td>Total en USD</td>
               <td>{usd(desglose.total)}</td>
             </tr>
           </tfoot>
         </table>
 
         <p className={styles.disclaimer}>
-          Precio estimado. Puede variar ±5% según el tipo de cambio al momento
-          del despacho. No incluye seguro del envío.
+          Precio estimado. Puede variar ±5% según el tipo de cambio al momento del despacho.
+          Tiempo estimado de entrega: 15–25 días hábiles.
         </p>
 
-        <a href="/registro" className={styles.btnCta}>
+        <a href={ctaHref} className={styles.btnCta}>
           Solicitar importación →
         </a>
       </div>

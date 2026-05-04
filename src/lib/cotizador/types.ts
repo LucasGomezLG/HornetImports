@@ -1,10 +1,11 @@
 export interface InputCotizacion {
+  nombreProducto: string;
   urlProducto: string;
   precioUsdProducto: number;
   pesoKg: number;
   largo: number; // cm
   ancho: number; // cm
-  alto: number; // cm
+  alto: number;  // cm
   categoriaId: string;
 }
 
@@ -16,7 +17,9 @@ export interface CotizacionDesglose {
   ivaImportacion: number;
   tasaEstadistica: number;
   feeServicio: number;
-  total: number;
+  total: number;       // USD
+  tipoCambio: number;  // ARS por USD
+  totalArs: number;    // ARS
 }
 
 export type RazonRechazo =
@@ -27,5 +30,5 @@ export type RazonRechazo =
   | "volumen_excedido";
 
 export type CotizacionResult =
-  | { ok: true; desglose: CotizacionDesglose }
+  | { ok: true; desglose: CotizacionDesglose; cotizacionId: string }
   | { ok: false; razon: RazonRechazo };
