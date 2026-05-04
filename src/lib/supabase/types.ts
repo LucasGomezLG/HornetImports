@@ -12,6 +12,8 @@ export type EstadoPedido =
 
 export interface Database {
   public: {
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
     Tables: {
       profiles: {
         Row: {
@@ -38,6 +40,7 @@ export interface Database {
           cuit?: string | null;
           tipo?: TipoCuenta;
         };
+        Relationships: [];
       };
       cotizaciones: {
         Row: {
@@ -70,6 +73,7 @@ export interface Database {
           estado?: EstadoCotizacion;
           costo_total_ars?: number;
         };
+        Relationships: [];
       };
       pedidos: {
         Row: {
@@ -105,6 +109,7 @@ export interface Database {
           tracking_code?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       listings: {
         Row: {
@@ -140,6 +145,7 @@ export interface Database {
           stock?: number;
           activo?: boolean;
         };
+        Relationships: [];
       };
     };
   };

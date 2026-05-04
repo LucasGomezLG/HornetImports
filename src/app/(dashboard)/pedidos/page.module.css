@@ -187,6 +187,8 @@
 .status_blue   { background: #dbeafe; color: #2563eb; }
 .status_green  { background: #d1fae5; color: #059669; }
 .status_red    { background: #fee2e2; color: #dc2626; }
+.status_purple { background: #ede9fe; color: #7c3aed; }
+.status_yellow { background: #fef9c3; color: #a16207; }
 
 /* ── Cancel note ───────────────────────────────────────── */
 .cancelNote {
@@ -209,4 +211,44 @@
   padding: var(--space-12) 0;
   color: #9ca3af;
   font-size: 0.9375rem;
+}
+
+/* ── Pagination ────────────────────────────────────────── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+}
+
+.pageBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  background: #ffffff;
+  transition: border-color 0.15s, background 0.15s;
+  cursor: pointer;
+}
+
+.pageBtn:hover:not(:disabled) {
+  border-color: #f5a623;
+  background: #fffbf0;
+  color: #111827;
+}
+
+.pageBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.pageInfo {
+  font-size: 0.875rem;
+  color: #6b7280;
+  white-space: nowrap;
 }

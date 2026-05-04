@@ -1,9 +1,29 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ORDERS_MOCK, STATUS_LABEL, type OrderStatus } from "@/lib/orders-mock";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import type { EstadoPedido } from "@/lib/supabase/types";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = { title: "Mi cuenta | Hornet Imports" };
+
+const STATUS_LABEL: Record<EstadoPedido, string> = {
+  en_proceso:  "En proceso",
+  comprado:    "Comprado",
+  en_transito: "En tránsito",
+  en_aduana:   "En aduana",
+  entregado:   "Entregado",
+  cancelado:   "Cancelado",
+};
+
+const STATUS_COLOR: Record<EstadoPedido, string> = {
+  en_proceso:  "orange",
+  comprado:    "purple",
+  en_transito: "blue",
+  en_aduana:   "yellow",
+  entregado:   "green",
+  cancelado:   "red",
+};
 
 function formatUSD(n: number) {
   return new Intl.NumberFormat("es-AR", {
@@ -21,40 +41,55 @@ function formatDate(iso: string) {
   });
 }
 
-const STATUS_COLOR: Record<OrderStatus, string> = {
-  en_proceso:  "orange",
-  comprado:    "purple",
-  en_transito: "blue",
-  en_aduana:   "yellow",
-  entregado:   "green",
-  cancelado:   "red",
-};
+export default async function DashboardPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-const activos = ORDERS_MOCK.filter((o) => o.estado === "en_proceso" || o.estado === "en_transito");
-const completados = ORDERS_MOCK.filter((o) => o.estado === "entregado");
-const gastado = ORDERS_MOCK.filter((o) => o.estado !== "cancelado").reduce((acc, o) => acc + o.precioUsd, 0);
+  if (!user) redirect("/login");
 
-export default function DashboardPage() {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  const { data: pedidos } = await supabase
+    .from("pedidos")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  const pedidosData = pedidos ?? [];
+  const nombre = profile?.nombre ?? user.email?.split("@")[0] ?? "Usuario";
+  const inicial = nombre[0]?.toUpperCase() ?? "U";
+
+  const activos = pedidosData.filter((p) =>
+    ["en_proceso", "comprado", "en_transito", "en_aduana"].includes(p.estado)
+  ).length;
+  const completados = pedidosData.filter((p) => p.estado === "entregado").length;
+  const gastado = pedidosData
+    .filter((p) => p.estado !== "cancelado")
+    .reduce((acc, p) => acc + p.precio_usd, 0);
+
   return (
     <div className={styles.page}>
-      {/* Welcome */}
       <div className={styles.welcome}>
-        <div className={styles.welcomeAvatar}>C</div>
+        <div className={styles.welcomeAvatar}>{inicial}</div>
         <div>
-          <h1 className={styles.welcomeTitle}>Hola, Carlos</h1>
+          <h1 className={styles.welcomeTitle}>Hola, {nombre}</h1>
           <p className={styles.welcomeSub}>Bienvenido a tu panel de Hornet Imports</p>
         </div>
       </div>
 
-      {/* Stats */}
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Pedidos activos</span>
-          <span className={`${styles.statNum} ${styles.statBlue}`}>{activos.length}</span>
+          <span className={`${styles.statNum} ${styles.statBlue}`}>{activos}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Completados</span>
-          <span className={`${styles.statNum} ${styles.statGreen}`}>{completados.length}</span>
+          <span className={`${styles.statNum} ${styles.statGreen}`}>{completados}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Total gastado</span>
@@ -62,37 +97,45 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent orders */}
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Últimos pedidos</h2>
           <Link href="/pedidos" className={styles.sectionLink}>Ver todos →</Link>
         </div>
-        <div className={styles.orderList}>
-          {ORDERS_MOCK.slice(0, 3).map((order) => (
-            <div key={order.id} className={styles.orderCard}>
-              <div className={styles.orderLeft}>
-                <span className={styles.orderId}>{order.id}</span>
-                <p className={styles.orderProducto}>{order.producto}</p>
-                <span className={styles.orderFecha}>{formatDate(order.fecha)} · {order.origen}</span>
+
+        {pedidosData.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p className={styles.emptyText}>Todavía no tenés pedidos.</p>
+            <Link href="/cotizar" className={styles.emptyBtn}>Cotizá tu primer importación →</Link>
+          </div>
+        ) : (
+          <div className={styles.orderList}>
+            {pedidosData.slice(0, 3).map((order) => (
+              <div key={order.id} className={styles.orderCard}>
+                <div className={styles.orderLeft}>
+                  <span className={styles.orderId}>{order.id}</span>
+                  <p className={styles.orderProducto}>{order.producto_nombre}</p>
+                  <span className={styles.orderFecha}>
+                    {formatDate(order.created_at)}{order.origen ? ` · ${order.origen}` : ""}
+                  </span>
+                </div>
+                <div className={styles.orderRight}>
+                  <span className={`${styles.statusChip} ${styles[`status_${STATUS_COLOR[order.estado]}`]}`}>
+                    {STATUS_LABEL[order.estado]}
+                  </span>
+                  <span className={styles.orderPrecio}>{formatUSD(order.precio_usd)}</span>
+                  {order.tracking_code && (
+                    <Link href={`/seguimiento?code=${order.tracking_code}`} className={styles.trackingBtn}>
+                      Ver tracking
+                    </Link>
+                  )}
+                </div>
               </div>
-              <div className={styles.orderRight}>
-                <span className={`${styles.statusChip} ${styles[`status_${STATUS_COLOR[order.estado]}`]}`}>
-                  {STATUS_LABEL[order.estado]}
-                </span>
-                <span className={styles.orderPrecio}>{formatUSD(order.precioUsd)}</span>
-                {order.tracking && (
-                  <Link href={`/seguimiento?code=${order.tracking}`} className={styles.trackingBtn}>
-                    Ver tracking
-                  </Link>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Quick actions */}
       <div className={styles.actionsGrid}>
         <Link href="/cotizar" className={styles.actionCard}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
