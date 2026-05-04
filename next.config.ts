@@ -6,7 +6,6 @@ const nextConfig: NextConfig = {
   output: "export",
   trailingSlash: true,
   basePath: isGitHubPages ? "/HornetImports" : "",
-  assetPrefix: isGitHubPages ? "/HornetImports/" : "",
   images: {
     unoptimized: true,
   },
