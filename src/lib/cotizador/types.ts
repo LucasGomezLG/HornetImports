@@ -9,6 +9,7 @@ export interface InputCotizacion {
   categoriaId: string;
   origen: OrigenProducto;
   tipo: TipoImportacion;
+  utmSource?: string;
 }
 
 export interface CotizacionDesglose {

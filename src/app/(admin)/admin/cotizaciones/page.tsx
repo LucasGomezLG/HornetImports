@@ -70,7 +70,12 @@ export default async function AdminCotizacionesPage() {
                 const email = c.user_id ? profileMap.get(c.user_id) ?? null : null;
                 return (
                   <tr key={c.id}>
-                    <td className={styles.tdProducto}>{c.nombre_producto}</td>
+                    <td className={styles.tdProducto}>
+                      {c.nombre_producto}
+                      {(c.desglose as { alertaOrigenEuropa?: boolean } | null)?.alertaOrigenEuropa && (
+                        <span className={styles.europaTag} title="Revisar ruta — origen Europa">🌍</span>
+                      )}
+                    </td>
                     <td className={styles.tdEmail}>{email ?? "Anónimo"}</td>
                     <td className={styles.tdPrecio}>{formatUSDInt(c.precio_usd)}</td>
                     <td className={styles.tdMuted}>{c.peso_kg} kg</td>

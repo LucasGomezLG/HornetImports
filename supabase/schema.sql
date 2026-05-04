@@ -93,6 +93,7 @@ CREATE TABLE cotizaciones (
   desglose           JSONB             NOT NULL DEFAULT '{}',
   estado             estado_cotizacion NOT NULL DEFAULT 'pendiente',
   aprobada_por_admin BOOLEAN           NOT NULL DEFAULT FALSE,
+  utm_source         TEXT,
   created_at         TIMESTAMPTZ       NOT NULL DEFAULT now()
 );
 

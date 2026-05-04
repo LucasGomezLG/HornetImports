@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
       costo_total_ars: resultado.desglose.totalArs,
       desglose: resultado.desglose as unknown as Json,
       estado: "pendiente",
+      utm_source: body.utmSource ?? null,
     })
     .select("id")
     .single();

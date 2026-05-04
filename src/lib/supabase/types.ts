@@ -58,6 +58,7 @@ export interface Database {
           desglose: Json;
           estado: EstadoCotizacion;
           aprobada_por_admin: boolean;
+          utm_source: string | null;
           created_at: string;
         };
         Insert: {
@@ -72,6 +73,7 @@ export interface Database {
           desglose?: Json;
           estado?: EstadoCotizacion;
           aprobada_por_admin?: boolean;
+          utm_source?: string | null;
           created_at?: string;
         };
         Update: {

@@ -16,6 +16,11 @@ const INPUT_INICIAL: InputCotizacion = {
   tipo: "particular",
 };
 
+function readUtmSource(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  return new URLSearchParams(window.location.search).get("utm_source") ?? undefined;
+}
+
 const ORIGENES = [
   { value: "asia",   label: "Asia / China" },
   { value: "eeuu",   label: "EE.UU." },
@@ -69,7 +74,7 @@ export default function CotizadorForm() {
       const res = await fetch("/api/cotizar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
+        body: JSON.stringify({ ...input, utmSource: readUtmSource() }),
       });
       const data: CotizacionResult = await res.json();
       setResultado(data);

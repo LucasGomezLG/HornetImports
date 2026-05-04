@@ -20,6 +20,43 @@
   margin-top: 2px;
 }
 
+/* ── Filtros ──────────────────────────────────────────── */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.filtroTab {
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: var(--radius-full);
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #6b7280;
+  white-space: nowrap;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.filtroTab:hover {
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+.filtroTabActive {
+  background: #1d2b3a;
+  border-color: #1d2b3a;
+  color: #ffffff;
+}
+
+.tdEmpty {
+  text-align: center;
+  color: #9ca3af;
+  padding: var(--space-8) !important;
+  font-size: 0.875rem;
+}
+
 .section {
   background: #ffffff;
   border: 1px solid #e5e7eb;

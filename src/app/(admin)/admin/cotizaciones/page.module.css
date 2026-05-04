@@ -35,6 +35,14 @@
 .tdId { font-family: monospace; font-size: 0.8rem; color: #6b7280 !important; white-space: nowrap; }
 .tdProducto { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; color: #111827; }
 .tdEmail { font-size: 0.82rem; color: #6b7280; }
+
+.europaTag {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.85rem;
+  cursor: default;
+  vertical-align: middle;
+}
 .tdPrecio { font-weight: 600; white-space: nowrap; }
 .tdMuted { color: #9ca3af !important; font-size: 0.82rem; white-space: nowrap; }
 
