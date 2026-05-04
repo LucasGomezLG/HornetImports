@@ -12,14 +12,18 @@ import styles from "./page.module.css";
 const FILTERS: { id: OrderStatus | "todos"; label: string }[] = [
   { id: "todos",       label: "Todos" },
   { id: "en_proceso",  label: "En proceso" },
+  { id: "comprado",    label: "Comprado" },
   { id: "en_transito", label: "En tránsito" },
+  { id: "en_aduana",   label: "En aduana" },
   { id: "entregado",   label: "Entregado" },
   { id: "cancelado",   label: "Cancelado" },
 ];
 
 const STATUS_COLOR: Record<OrderStatus, string> = {
   en_proceso:  "orange",
+  comprado:    "purple",
   en_transito: "blue",
+  en_aduana:   "yellow",
   entregado:   "green",
   cancelado:   "red",
 };

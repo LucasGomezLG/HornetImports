@@ -149,7 +149,9 @@
 }
 
 .status_orange { background: #fef3c7; color: #d97706; }
+.status_purple { background: #ede9fe; color: #7c3aed; }
 .status_blue   { background: #dbeafe; color: #2563eb; }
+.status_yellow { background: #fef9c3; color: #a16207; }
 .status_green  { background: #d1fae5; color: #059669; }
 .status_red    { background: #fee2e2; color: #dc2626; }
 

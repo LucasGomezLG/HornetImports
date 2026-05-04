@@ -27,7 +27,9 @@ function formatDate(iso: string) {
 
 const STATUS_COLOR: Record<OrderStatus, string> = {
   en_proceso:  "orange",
+  comprado:    "purple",
   en_transito: "blue",
+  en_aduana:   "yellow",
   entregado:   "green",
   cancelado:   "red",
 };

@@ -114,3 +114,10 @@ ul,
 ol {
   list-style: none;
 }
+
+/* ── Mobile bottom nav clearance ──────────────────────── */
+@media (max-width: 768px) {
+  main {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+}

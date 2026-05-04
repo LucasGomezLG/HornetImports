@@ -1,0 +1,45 @@
+.page { display: flex; flex-direction: column; gap: var(--space-6); }
+
+.header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
+
+.title { font-size: 1.375rem; font-weight: 800; color: #111827; letter-spacing: -0.02em; }
+.subtitle { font-size: 0.875rem; color: #6b7280; margin-top: 2px; }
+
+.section { background: #ffffff; border: 1px solid #e5e7eb; border-radius: var(--radius-lg); padding: var(--space-6); }
+
+.tableWrapper { overflow-x: auto; }
+
+.table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+
+.table th {
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #6b7280;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+  vertical-align: middle;
+}
+
+.table tr:last-child td { border-bottom: none; }
+
+.tdId { font-family: monospace; font-size: 0.8rem; color: #6b7280 !important; white-space: nowrap; }
+.tdProducto { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; color: #111827; }
+.tdEmail { font-size: 0.82rem; color: #6b7280; }
+.tdPrecio { font-weight: 600; white-space: nowrap; }
+.tdMuted { color: #9ca3af !important; font-size: 0.82rem; white-space: nowrap; }
+
+.statusChip { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full); white-space: nowrap; }
+.status_orange { background: #fef3c7; color: #d97706; }
+.status_green  { background: #d1fae5; color: #059669; }
+.status_red    { background: #fee2e2; color: #dc2626; }
+.status_gray   { background: #f3f4f6; color: #6b7280; }

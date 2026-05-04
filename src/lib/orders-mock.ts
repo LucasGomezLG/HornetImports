@@ -1,4 +1,4 @@
-export type OrderStatus = "en_proceso" | "en_transito" | "entregado" | "cancelado";
+export type OrderStatus = "en_proceso" | "comprado" | "en_transito" | "en_aduana" | "entregado" | "cancelado";
 
 export interface Order {
   id: string;
@@ -14,7 +14,9 @@ export interface Order {
 
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   en_proceso:  "En proceso",
+  comprado:    "Comprado",
   en_transito: "En tránsito",
+  en_aduana:   "En aduana",
   entregado:   "Entregado",
   cancelado:   "Cancelado",
 };
