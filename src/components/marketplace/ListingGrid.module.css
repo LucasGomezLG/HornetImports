@@ -198,7 +198,7 @@
   .grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 768px) {
   .filterBar {
     flex-direction: column;
     align-items: stretch;
@@ -211,6 +211,8 @@
     -webkit-overflow-scrolling: touch;
     padding-bottom: var(--space-1);
     scrollbar-width: none;
+    min-width: 0;
+    width: 100%;
   }
 
   .filterTabs::-webkit-scrollbar {
@@ -224,7 +226,9 @@
   .count {
     font-size: 0.8rem;
   }
+}
 
+@media (max-width: 520px) {
   .grid { grid-template-columns: 1fr; }
   .wrapper { padding: 0 var(--space-4) var(--space-12); }
 }
