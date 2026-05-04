@@ -39,6 +39,7 @@ export default function ListingGrid() {
           {CATEGORIAS_MARKETPLACE.map(({ id, label }) => (
             <button
               key={id}
+              type="button"
               className={categoriaActiva === id ? `${styles.tab} ${styles.tabActive}` : styles.tab}
               onClick={() => setCategoriaActiva(id)}
             >

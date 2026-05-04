@@ -24,6 +24,7 @@ export default function ProductGrid() {
           {CATEGORIAS_TIENDA.map(({ id, label }) => (
             <button
               key={id}
+              type="button"
               className={
                 categoriaActiva === id
                   ? `${styles.tab} ${styles.tabActive}`

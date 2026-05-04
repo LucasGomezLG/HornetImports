@@ -424,4 +424,46 @@
   .container {
     padding: 0 var(--space-4);
   }
+
+  .features,
+  .howItWorks,
+  .comparison {
+    padding: var(--space-12) 0;
+  }
+
+  .sectionHeader {
+    margin-bottom: var(--space-8);
+  }
+
+  .heroCtas {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btnPrimary,
+  .btnSecondary {
+    text-align: center;
+    padding: var(--space-4);
+  }
+
+  .comparisonHeader,
+  .comparisonRow {
+    grid-template-columns: 1fr 70px 70px;
+  }
+
+  .comparisonFeatureCol {
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.8125rem;
+  }
+
+  .comparisonCol {
+    padding: var(--space-2) var(--space-1);
+    font-size: 0.8rem;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .mayoristasInner {
+    padding: var(--space-12) var(--space-4);
+  }
 }
