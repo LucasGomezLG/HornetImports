@@ -5,7 +5,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Para Empresas y Revendedores | Hornet Imports",
   description:
-    "Escalá tu negocio con importación directa y comisiones desde el 3%. Sin depósito propio, sin logística, sin ML.",
+    "Escalá tu negocio con importación directa y comisión 8-12% en marketplace. Sin depósito propio, sin logística, sin ML.",
 };
 
 const BENEFICIOS = [
@@ -16,8 +16,8 @@ const BENEFICIOS = [
         <polyline points="17 6 23 6 23 12" />
       </svg>
     ),
-    titulo: "Comisión desde 3%",
-    desc: "Vendé en nuestro marketplace con hasta 5x menos comisión que Mercado Libre. Más margen, mismo alcance.",
+    titulo: "Comisión 8–12%",
+    desc: "Vendé en nuestro marketplace pagando hasta un 40% menos comisión que Mercado Libre. Más margen en cada venta.",
   },
   {
     icon: (
@@ -97,7 +97,7 @@ export default function MayoristaPage() {
             <span className={styles.accent}>Sin los costos de ML.</span>
           </h1>
           <p className={styles.heroSubtitle}>
-            Vendé en nuestro marketplace con comisiones desde el 3% o tercerizá
+            Vendé en nuestro marketplace con comisión 8-12% (vs 13-17% de ML) o tercerizá
             toda tu logística de importación. Sin depósito propio, sin trámites aduaneros,
             sin dolores de cabeza.
           </p>
@@ -116,12 +116,12 @@ export default function MayoristaPage() {
       <section className={styles.stats}>
         <div className={styles.statsInner}>
           <div className={styles.stat}>
-            <span className={styles.statNum}>3–5%</span>
+            <span className={styles.statNum}>8–12%</span>
             <span className={styles.statLabel}>Comisión en marketplace</span>
           </div>
           <div className={styles.statDivider} />
           <div className={styles.stat}>
-            <span className={styles.statNum}>-70%</span>
+            <span className={styles.statNum}>-40%</span>
             <span className={styles.statLabel}>vs comisión de ML</span>
           </div>
           <div className={styles.statDivider} />

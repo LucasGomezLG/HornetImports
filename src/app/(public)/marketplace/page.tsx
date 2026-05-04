@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import ListingGrid from "@/components/marketplace/ListingGrid";
 import styles from "./page.module.css";
 
@@ -40,6 +41,30 @@ export default function MarketplacePage() {
 
       <section className={styles.gridSection}>
         <ListingGrid />
+      </section>
+
+      {/* ── CTA vendedor ────────────────────────────────── */}
+      <section className={styles.vendedorCta}>
+        <div className={styles.vendedorInner}>
+          <div className={styles.vendedorText}>
+            <p className={styles.vendedorEyebrow}>¿Tenés productos para vender?</p>
+            <h2 className={styles.vendedorTitle}>
+              Publicá gratis. Comisión 8–12%.
+            </h2>
+            <p className={styles.vendedorSubtitle}>
+              Sin mensualidad, sin costo de alta. Solo pagás comisión cuando vendés —
+              y es hasta un 40% menos que Mercado Libre.
+            </p>
+          </div>
+          <div className={styles.vendedorActions}>
+            <Link href="/vender" className={styles.vendedorBtnPrimary}>
+              Cómo vender →
+            </Link>
+            <Link href="/registro?plan=vendedor" className={styles.vendedorBtnSecondary}>
+              Crear cuenta gratis
+            </Link>
+          </div>
+        </div>
       </section>
     </>
   );

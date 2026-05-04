@@ -78,6 +78,108 @@
   padding-top: var(--space-8);
 }
 
+/* ── Vendedor CTA ─────────────────────────────────────── */
+.vendedorCta {
+  background: var(--color-primary);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.vendedorInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.vendedorEyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-2);
+}
+
+.vendedorTitle {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-3);
+}
+
+.vendedorSubtitle {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.65;
+  max-width: 480px;
+}
+
+.vendedorActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.vendedorBtnPrimary {
+  display: block;
+  padding: var(--space-4) var(--space-8);
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  text-align: center;
+  white-space: nowrap;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.vendedorBtnPrimary:hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
+}
+
+.vendedorBtnSecondary {
+  display: block;
+  padding: var(--space-3) var(--space-8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  text-align: center;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.vendedorBtnSecondary:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .vendedorInner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .vendedorSubtitle { max-width: 100%; }
+
+  .vendedorActions {
+    width: 100%;
+  }
+
+  .vendedorBtnPrimary,
+  .vendedorBtnSecondary {
+    width: 100%;
+  }
+}
+
 @media (max-width: 520px) {
   .stats { gap: var(--space-4); }
   .statDivider { display: none; }

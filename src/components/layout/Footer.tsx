@@ -19,6 +19,7 @@ export default function Footer() {
           <Link href="/marketplace" className={styles.link}>Marketplace</Link>
           <Link href="/seguimiento" className={styles.link}>Seguimiento</Link>
           <Link href="/mayorista" className={styles.link}>Mayoristas</Link>
+          <Link href="/vender" className={styles.link}>Vendé aquí</Link>
           <Link href="/terminos" className={styles.link}>Términos</Link>
           <Link href="/privacidad" className={styles.link}>Privacidad</Link>
         </nav>
