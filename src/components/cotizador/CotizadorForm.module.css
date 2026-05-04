@@ -212,4 +212,16 @@
   .wrapper {
     padding: 0 var(--space-3) var(--space-12);
   }
+
+  .section {
+    padding: var(--space-4);
+  }
+
+  .errorBox {
+    margin: var(--space-3) var(--space-4) 0;
+  }
+
+  .formFooter {
+    padding: var(--space-4);
+  }
 }
