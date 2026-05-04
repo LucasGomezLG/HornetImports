@@ -23,6 +23,7 @@ const MENSAJES_ERROR: Record<string, string> = {
   precio_minimo: "El precio mínimo para importar es USD 25.",
   dimensiones_invalidas: "Verificá que el peso y las dimensiones estén completos y sean correctos.",
   volumen_excedido: "El paquete supera los límites del régimen Courier (30 kg / 0.1 m³). Escribinos para cotización especial.",
+  rate_limit: "Demasiadas consultas. Esperá un momento e intentá de nuevo.",
 };
 
 export default function CotizadorForm() {

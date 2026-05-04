@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatUSDInt, formatDate } from "@/lib/utils/format";
 import type { EstadoCotizacion } from "@/lib/supabase/types";
+import CotizacionActions from "./CotizacionActions";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = { title: "Cotizaciones | Admin Hornet Imports" };
@@ -57,31 +58,39 @@ export default async function AdminCotizacionesPage() {
                 <th>Usuario</th>
                 <th>Precio USD</th>
                 <th>Peso</th>
-                <th>Categoría</th>
                 <th>Estado</th>
                 <th>Fecha</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 ? (
                 <tr><td colSpan={7} className={styles.tdEmpty}>No hay cotizaciones aún.</td></tr>
-              ) : rows.map((c) => (
-                <tr key={c.id}>
-                  <td className={styles.tdProducto}>{c.nombre_producto}</td>
-                  <td className={styles.tdEmail}>
-                    {c.user_id ? profileMap.get(c.user_id) ?? "Anónimo" : "Anónimo"}
-                  </td>
-                  <td className={styles.tdPrecio}>{formatUSDInt(c.precio_usd)}</td>
-                  <td className={styles.tdMuted}>{c.peso_kg} kg</td>
-                  <td className={styles.tdMuted}>{c.categoria}</td>
-                  <td>
-                    <span className={`${styles.statusChip} ${styles[`status_${ESTADO_COLOR[c.estado]}`]}`}>
-                      {ESTADO_LABEL[c.estado]}
-                    </span>
-                  </td>
-                  <td className={styles.tdMuted}>{formatDate(c.created_at, false)}</td>
-                </tr>
-              ))}
+              ) : rows.map((c) => {
+                const email = c.user_id ? profileMap.get(c.user_id) ?? null : null;
+                return (
+                  <tr key={c.id}>
+                    <td className={styles.tdProducto}>{c.nombre_producto}</td>
+                    <td className={styles.tdEmail}>{email ?? "Anónimo"}</td>
+                    <td className={styles.tdPrecio}>{formatUSDInt(c.precio_usd)}</td>
+                    <td className={styles.tdMuted}>{c.peso_kg} kg</td>
+                    <td>
+                      <span className={`${styles.statusChip} ${styles[`status_${ESTADO_COLOR[c.estado]}`]}`}>
+                        {ESTADO_LABEL[c.estado]}
+                      </span>
+                    </td>
+                    <td className={styles.tdMuted}>{formatDate(c.created_at, false)}</td>
+                    <td>
+                      <CotizacionActions
+                        cotizacionId={c.id}
+                        emailUsuario={email}
+                        nombreProducto={c.nombre_producto}
+                        estado={c.estado}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

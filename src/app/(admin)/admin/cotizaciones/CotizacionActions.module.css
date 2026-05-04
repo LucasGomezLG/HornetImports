@@ -1,0 +1,81 @@
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.btnLink {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  background: var(--color-accent);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.btnLink:hover:not(:disabled) { background: var(--color-accent-hover); }
+.btnLink:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btnRechazar {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btnRechazar:hover:not(:disabled) { background: #fee2e2; }
+.btnRechazar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.rechazarForm {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.motivoInput {
+  font-size: 0.78rem;
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: var(--radius-md);
+  width: 140px;
+  outline: none;
+}
+
+.motivoInput:focus { border-color: #dc2626; }
+
+.btnConfirmRechazar {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.btnCancel {
+  font-size: 0.75rem;
+  color: #6b7280;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.sent { font-size: 0.78rem; font-weight: 700; color: #059669; }
+.rejected { font-size: 0.78rem; font-weight: 700; color: #dc2626; }
+.noEmail { font-size: 0.75rem; color: #9ca3af; }
+.errorTxt { font-size: 0.72rem; color: #dc2626; }
