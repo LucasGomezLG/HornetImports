@@ -1,0 +1,46 @@
+/* ── Hero compacto ────────────────────────────────────── */
+.hero {
+  background: linear-gradient(155deg, #1d2b3a 0%, #152028 100%);
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(155deg, #1d2b3a 0%, #152028 100%);
+  background-size: 28px 28px, cover;
+  padding: var(--space-12) var(--space-6);
+}
+
+.heroContent {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-3);
+}
+
+.title {
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: var(--space-3);
+  max-width: 600px;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+  max-width: 520px;
+}
+
+/* ── Grid section ─────────────────────────────────────── */
+.gridSection {
+  background: var(--color-bg);
+  padding-top: var(--space-8);
+}
