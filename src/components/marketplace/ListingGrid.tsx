@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { LISTINGS_MOCK, CATEGORIAS_MARKETPLACE } from "@/lib/marketplace/listings-mock";
 import styles from "./ListingGrid.module.css";
 
@@ -80,7 +81,7 @@ export default function ListingGrid() {
 
               <div className={styles.bottom}>
                 <span className={styles.price}>{formatUSD(listing.precioUsd)}</span>
-                <a href="/registro" className={styles.btnVer}>Ver producto</a>
+                <Link href={`/marketplace/${listing.id}`} className={styles.btnVer}>Ver producto</Link>
               </div>
             </div>
           </div>

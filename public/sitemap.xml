@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Páginas principales -->
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/</loc><priority>1.0</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/cotizar/</loc><priority>0.9</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/</loc><priority>0.9</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/marketplace/</loc><priority>0.9</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/vender/</loc><priority>0.8</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/mayorista/</loc><priority>0.8</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/seguimiento/</loc><priority>0.7</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/nosotros/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/terminos/</loc><priority>0.3</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/privacidad/</loc><priority>0.3</priority></url>
+
+  <!-- Tienda — productos -->
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/ap-001/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/ap-002/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/ap-003/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/ap-004/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/ap-005/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/ap-006/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/he-001/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/he-002/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/he-003/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/he-004/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/ho-001/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/ho-002/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/de-001/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/de-002/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/ac-001/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/tienda/ac-002/</loc><priority>0.6</priority></url>
+
+  <!-- Marketplace — listings -->
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/marketplace/ml-001/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/marketplace/ml-002/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/marketplace/ml-003/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/marketplace/ml-004/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/marketplace/ml-005/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/marketplace/ml-006/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/marketplace/ml-007/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/marketplace/ml-008/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/marketplace/ml-009/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/marketplace/ml-010/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/marketplace/ml-011/</loc><priority>0.6</priority></url>
+  <url><loc>https://lucasgomezlg.github.io/HornetImports/marketplace/ml-012/</loc><priority>0.6</priority></url>
+
+</urlset>

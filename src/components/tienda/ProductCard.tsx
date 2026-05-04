@@ -117,10 +117,10 @@ export default function ProductCard({ producto }: { producto: ProductoTienda }) 
         </p>
 
         <Link
-          href={`/registro?plan=comprador&producto=${encodeURIComponent(producto.nombre)}`}
+          href={`/tienda/${producto.id}`}
           className={styles.btnComprar}
         >
-          Comprar
+          Ver producto →
         </Link>
       </div>
     </div>
