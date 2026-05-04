@@ -97,7 +97,17 @@ export default async function AdminPedidosPage({
                 return (
                   <tr key={order.id}>
                     <td className={styles.tdId}>{order.id}</td>
-                    <td className={styles.tdProducto}>{order.producto_nombre}</td>
+                    <td className={styles.tdProducto}>
+                      {order.producto_nombre}
+                      {order.tipo_servicio === "forwarding" && (
+                        <span className={styles.fwdTag}>📦 Fwd</span>
+                      )}
+                      {order.tipo_servicio === "forwarding" && order.tracking_codigo_cliente && (
+                        <span className={styles.fwdTracking} title="Tracking del cliente a Miami">
+                          {order.tracking_codigo_cliente}
+                        </span>
+                      )}
+                    </td>
                     <td>{comprador}</td>
                     <td className={styles.tdPrecio}>{formatUSDInt(order.precio_usd)}</td>
                     <td className={styles.tdMuted}>{formatDate(order.created_at, false)}</td>

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import type { EstadoPedido, Database } from "@/lib/supabase/types";
 import { formatUSD, formatDate } from "@/lib/utils/format";
+import { guardarTrackingCliente } from "./actions";
 import styles from "./page.module.css";
 
 type PedidoRow = Database["public"]["Tables"]["pedidos"]["Row"];
@@ -37,6 +38,63 @@ const STATUS_COLOR: Record<EstadoPedido, string> = {
 };
 
 const PAGE_SIZE = 8;
+
+function TrackingClienteInput({ pedidoId, trackingInicial }: { pedidoId: string; trackingInicial: string | null }) {
+  const [value, setValue] = useState(trackingInicial ?? "");
+  const [saved, setSaved] = useState(!!trackingInicial);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  if (saved && value) {
+    return (
+      <div className={styles.fwdTrackingDone}>
+        <span>📦 Tracking a Miami:</span>
+        <span className={styles.fwdTrackingDoneCode}>{value}</span>
+      </div>
+    );
+  }
+
+  function handleSubmit() {
+    setError(null);
+    startTransition(async () => {
+      const result = await guardarTrackingCliente(pedidoId, value);
+      if (result && "error" in result) {
+        setError(result.error);
+      } else {
+        setSaved(true);
+      }
+    });
+  }
+
+  return (
+    <div className={styles.fwdTrackingBanner}>
+      <span className={styles.fwdTrackingLabel}>
+        📦 Forwarding — Ingresá el tracking de tu envío a Miami
+      </span>
+      <span className={styles.fwdTrackingNote}>
+        Una vez que despachés el paquete al depósito, pegá acá el número de seguimiento del courier.
+      </span>
+      <div className={styles.fwdTrackingRow}>
+        <input
+          className={styles.fwdTrackingInput}
+          type="text"
+          placeholder="Ej: 1Z999AA10123456784"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+        />
+        <button
+          className={styles.fwdTrackingBtn}
+          onClick={handleSubmit}
+          disabled={isPending || !value.trim()}
+        >
+          {isPending ? "..." : "Confirmar"}
+        </button>
+      </div>
+      {error && <span className={styles.fwdTrackingError}>{error}</span>}
+    </div>
+  );
+}
 
 function TrackIcon() {
   return (
@@ -134,6 +192,13 @@ export default function PedidosList({ pedidos }: { pedidos: PedidoRow[] }) {
                   </span>
                 )}
               </div>
+
+              {order.tipo_servicio === "forwarding" && order.estado !== "cancelado" && (
+                <TrackingClienteInput
+                  pedidoId={order.id}
+                  trackingInicial={order.tracking_codigo_cliente ?? null}
+                />
+              )}
 
               {order.tracking_code && (
                 <div className={styles.orderActions}>

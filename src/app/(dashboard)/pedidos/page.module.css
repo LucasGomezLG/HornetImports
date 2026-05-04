@@ -190,6 +190,92 @@
 .status_purple { background: #ede9fe; color: #7c3aed; }
 .status_yellow { background: #fef9c3; color: #a16207; }
 
+/* ── Forwarding tracking input ─────────────────────────── */
+.fwdTrackingBanner {
+  background: #fefce8;
+  border: 1px solid #fde047;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fwdTrackingLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #713f12;
+}
+
+.fwdTrackingNote {
+  font-size: 0.75rem;
+  color: #92400e;
+}
+
+.fwdTrackingRow {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.fwdTrackingInput {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid #fde047;
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  font-size: 0.875rem;
+  font-family: monospace;
+  color: #1c1917;
+  transition: border-color 0.15s;
+}
+
+.fwdTrackingInput:focus {
+  outline: none;
+  border-color: #d97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12);
+}
+
+.fwdTrackingBtn {
+  height: 36px;
+  padding: 0 var(--space-4);
+  background: #d97706;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.fwdTrackingBtn:hover:not(:disabled) { background: #b45309; }
+.fwdTrackingBtn:disabled { opacity: 0.5; cursor: default; }
+
+.fwdTrackingError {
+  font-size: 0.75rem;
+  color: #dc2626;
+}
+
+.fwdTrackingDone {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.82rem;
+  color: #166534;
+}
+
+.fwdTrackingDoneCode {
+  font-family: monospace;
+  font-weight: 700;
+  color: #14532d;
+}
+
 /* ── Cancel note ───────────────────────────────────────── */
 .cancelNote {
   font-size: 0.8rem;

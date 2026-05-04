@@ -96,6 +96,8 @@ export interface Database {
           costo_total_ars: number;
           estado: EstadoPedido;
           tracking_code: string | null;
+          tracking_codigo_cliente: string | null;
+          tipo_servicio: string;
           origen: string | null;
           created_at: string;
           updated_at: string;
@@ -110,6 +112,8 @@ export interface Database {
           costo_total_ars: number;
           estado?: EstadoPedido;
           tracking_code?: string | null;
+          tracking_codigo_cliente?: string | null;
+          tipo_servicio?: string;
           origen?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -117,6 +121,7 @@ export interface Database {
         Update: {
           estado?: EstadoPedido;
           tracking_code?: string | null;
+          tracking_codigo_cliente?: string | null;
           updated_at?: string;
         };
         Relationships: [];

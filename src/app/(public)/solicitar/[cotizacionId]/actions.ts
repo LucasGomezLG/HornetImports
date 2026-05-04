@@ -35,6 +35,7 @@ export async function confirmarPedido(
       precio_usd: cotizacion.precio_usd,
       costo_total_ars: cotizacion.costo_total_ars,
       estado: "en_proceso",
+      tipo_servicio: cotizacion.tipo_servicio ?? "completo",
     })
     .select("id")
     .single();

@@ -94,7 +94,32 @@
 .table tr:last-child td { border-bottom: none; }
 
 .tdId { font-family: monospace; font-size: 0.8rem; color: #6b7280 !important; white-space: nowrap; }
-.tdProducto { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; color: #111827; }
+.tdProducto { max-width: 220px; font-weight: 500; color: #111827; }
+
+.fwdTag {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  background: #dbeafe;
+  color: #1d4ed8;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.fwdTracking {
+  display: block;
+  margin-top: 3px;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .tdMuted { color: #9ca3af !important; font-size: 0.82rem; white-space: nowrap; }
 .tdPrecio { font-weight: 600; white-space: nowrap; }
 .tdTracking { font-family: monospace; font-size: 0.78rem; color: #6b7280; }
