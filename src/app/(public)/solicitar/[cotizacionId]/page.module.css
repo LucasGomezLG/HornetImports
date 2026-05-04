@@ -1,0 +1,173 @@
+.page {
+  padding: var(--space-8) var(--space-6);
+  min-height: calc(100vh - var(--header-height));
+}
+
+.container {
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* ── Header ───────────────────────────────────────────── */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.eyebrow {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+}
+
+.title {
+  font-size: clamp(1.25rem, 4vw, 1.75rem);
+  font-weight: 800;
+  color: var(--color-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.productLink {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.productLink:hover { color: var(--color-primary); }
+
+/* ── Card ─────────────────────────────────────────────── */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Total hero ───────────────────────────────────────── */
+.totalHero {
+  background: linear-gradient(135deg, #1d2b3a 0%, #263d54 100%);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.totalLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.totalArs {
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  font-weight: 900;
+  color: var(--color-accent);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.totalUsd {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── Desglose ─────────────────────────────────────────── */
+.desglose {
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) 0;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.row:last-child { border-bottom: none; }
+
+.rowTotal {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-primary);
+  border-top: 2px solid var(--color-primary);
+  border-bottom: none;
+  padding-top: var(--space-4);
+  margin-top: var(--space-1);
+}
+
+/* ── Disclaimer ───────────────────────────────────────── */
+.disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.disclaimer svg { flex-shrink: 0; margin-top: 1px; }
+
+/* ── CTA ──────────────────────────────────────────────── */
+.ctaArea {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.btnConfirmar {
+  display: block;
+  width: 100%;
+  padding: var(--space-4);
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  letter-spacing: 0.01em;
+}
+
+.btnConfirmar:hover { background: var(--color-accent-hover); }
+.btnConfirmar:active { transform: scale(0.99); }
+.btnConfirmar:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.ctaNote {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.errorMsg {
+  font-size: 0.875rem;
+  color: var(--color-error);
+  background: #fee2e2;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 640px) {
+  .page { padding: var(--space-6) var(--space-4); }
+}

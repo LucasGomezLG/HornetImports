@@ -9,8 +9,8 @@ interface Props {
 
 export default function ResultadoCotizacion({ desglose, cotizacionId }: Props) {
   const ctaHref = cotizacionId
-    ? `/registro?cotizacion=${cotizacionId}`
-    : "/registro";
+    ? `/solicitar/${cotizacionId}`
+    : "/login";
 
   return (
     <div className={styles.card}>

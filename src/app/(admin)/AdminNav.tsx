@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import LogoutButton from "@/components/ui/LogoutButton";
 import styles from "./layout.module.css";
 
 const NAV = [
@@ -81,6 +82,7 @@ export default function AdminNav({ children, nombre }: { children: React.ReactNo
             </svg>
             Volver al sitio
           </Link>
+          <LogoutButton className={styles.logoutBtn} />
         </div>
       </aside>
 

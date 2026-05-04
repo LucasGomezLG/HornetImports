@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import LogoutButton from "@/components/ui/LogoutButton";
 import styles from "./layout.module.css";
 
 const NAV = [
@@ -80,6 +81,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </svg>
             Volver al marketplace
           </Link>
+          <LogoutButton className={styles.logoutBtn} />
         </div>
       </aside>
 
