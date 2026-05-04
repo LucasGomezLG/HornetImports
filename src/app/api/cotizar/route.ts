@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { calcularCotizacion } from "@/lib/cotizador/calcular";
 import type { InputCotizacion } from "@/lib/cotizador/types";
+import type { Database, Json } from "@/lib/supabase/types";
 
 async function getTipoCambio(): Promise<number> {
   try {
@@ -32,8 +33,7 @@ export async function POST(request: NextRequest) {
 
   // Guardar en Supabase
   const cookieStore = await cookies();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase = createServerClient<any>(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       peso_kg: body.pesoKg,
       categoria: body.categoriaId,
       costo_total_ars: resultado.desglose.totalArs,
-      desglose: resultado.desglose as unknown as Record<string, unknown>,
+      desglose: resultado.desglose as unknown as Json,
       estado: "pendiente",
     })
     .select("id")

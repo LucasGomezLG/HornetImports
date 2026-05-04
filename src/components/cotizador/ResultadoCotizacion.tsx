@@ -1,19 +1,6 @@
 import type { CotizacionDesglose } from "@/lib/cotizador/types";
+import { formatUSD as usd, formatARS as ars } from "@/lib/utils/format";
 import styles from "./ResultadoCotizacion.module.css";
-
-function usd(valor: number): string {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency", currency: "USD",
-    minimumFractionDigits: 2, maximumFractionDigits: 2,
-  }).format(valor);
-}
-
-function ars(valor: number): string {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency", currency: "ARS",
-    minimumFractionDigits: 0, maximumFractionDigits: 0,
-  }).format(valor);
-}
 
 interface Props {
   desglose: CotizacionDesglose;

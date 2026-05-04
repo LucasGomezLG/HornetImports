@@ -1,11 +1,16 @@
 import { getCategoriaById } from "./categorias";
 import type { InputCotizacion, CotizacionDesglose } from "./types";
 
+// Tarifa promedio courier China/EEUU, peso facturable (real vs volumétrico)
 const TARIFA_FLETE_USD_KG = 18;
+// Fee de servicio de importación + cobertura cambiaria (≠ comisión del marketplace 8-12%)
 const FEE_SERVICIO_RATIO = 0.15;
+// Impuestos fijos AFIP régimen courier
 const IVA_RATIO = 0.21;
 const TASA_ESTADISTICA_RATIO = 0.03;
+// Mínimo operativo para cubrir costos de gestión
 const PRECIO_MINIMO_USD = 25;
+// Límites del régimen courier argentino (AFIP)
 const PESO_MAX_KG = 30;
 const VOLUMEN_MAX_M3 = 0.1;
 

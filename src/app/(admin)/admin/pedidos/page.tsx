@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
-import { ORDERS_MOCK, STATUS_LABEL, type OrderStatus } from "@/lib/orders-mock";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { formatUSDInt, formatDate } from "@/lib/utils/format";
+import type { EstadoPedido } from "@/lib/supabase/types";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = { title: "Pedidos | Admin Hornet Imports" };
 
-function formatUSD(n: number) {
-  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n);
-}
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" });
-}
+const STATUS_LABEL: Record<EstadoPedido, string> = {
+  en_proceso:  "En proceso",
+  comprado:    "Comprado",
+  en_transito: "En tránsito",
+  en_aduana:   "En aduana",
+  entregado:   "Entregado",
+  cancelado:   "Cancelado",
+};
 
-const STATUS_COLOR: Record<OrderStatus, string> = {
+const STATUS_COLOR: Record<EstadoPedido, string> = {
   en_proceso:  "orange",
   comprado:    "purple",
   en_transito: "blue",
@@ -20,13 +24,30 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
   cancelado:   "red",
 };
 
-export default function AdminPedidosPage() {
+export default async function AdminPedidosPage() {
+  const db = createAdminClient();
+
+  const { data: pedidos } = await db
+    .from("pedidos")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  const rows = pedidos ?? [];
+
+  // Fetch profile names for user_ids present in pedidos
+  const userIds = [...new Set(rows.map((p) => p.user_id))];
+  const { data: profiles } = userIds.length > 0
+    ? await db.from("profiles").select("id, nombre, apellido").in("id", userIds)
+    : { data: [] };
+  const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Pedidos</h1>
-          <p className={styles.subtitle}>{ORDERS_MOCK.length} pedidos en total</p>
+          <p className={styles.subtitle}>{rows.length} pedidos (últimos 100)</p>
         </div>
       </div>
 
@@ -46,22 +67,30 @@ export default function AdminPedidosPage() {
               </tr>
             </thead>
             <tbody>
-              {ORDERS_MOCK.map((order) => (
-                <tr key={order.id}>
-                  <td className={styles.tdId}>{order.id}</td>
-                  <td className={styles.tdProducto}>{order.producto}</td>
-                  <td>{order.comprador}</td>
-                  <td className={styles.tdMuted}>{order.origen}</td>
-                  <td>
-                    <span className={`${styles.statusChip} ${styles[`status_${STATUS_COLOR[order.estado]}`]}`}>
-                      {STATUS_LABEL[order.estado]}
-                    </span>
-                  </td>
-                  <td className={styles.tdPrecio}>{formatUSD(order.precioUsd)}</td>
-                  <td className={styles.tdTracking}>{order.tracking || "—"}</td>
-                  <td className={styles.tdMuted}>{formatDate(order.fecha)}</td>
-                </tr>
-              ))}
+              {rows.length === 0 ? (
+                <tr><td colSpan={8} className={styles.tdEmpty}>No hay pedidos aún.</td></tr>
+              ) : rows.map((order) => {
+                const profile = profileMap.get(order.user_id);
+                const comprador = profile
+                  ? `${profile.nombre ?? ""}${profile.apellido ? ` ${profile.apellido}` : ""}`.trim() || "—"
+                  : "—";
+                return (
+                  <tr key={order.id}>
+                    <td className={styles.tdId}>{order.id}</td>
+                    <td className={styles.tdProducto}>{order.producto_nombre}</td>
+                    <td>{comprador}</td>
+                    <td className={styles.tdMuted}>{order.origen ?? "—"}</td>
+                    <td>
+                      <span className={`${styles.statusChip} ${styles[`status_${STATUS_COLOR[order.estado]}`]}`}>
+                        {STATUS_LABEL[order.estado]}
+                      </span>
+                    </td>
+                    <td className={styles.tdPrecio}>{formatUSDInt(order.precio_usd)}</td>
+                    <td className={styles.tdTracking}>{order.tracking_code ?? "—"}</td>
+                    <td className={styles.tdMuted}>{formatDate(order.created_at, false)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

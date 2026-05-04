@@ -1,12 +1,9 @@
-"use client";
-
-import { useState } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import FaqAccordion from "./FaqAccordion";
 import styles from "./page.module.css";
 
-// Can't export metadata from a "use client" component,
-// so we set it via a wrapper — or just omit since the RootLayout title is fine.
+export const metadata: Metadata = { title: "Preguntas frecuentes | Hornet Imports" };
 
 const FAQS = [
   {
@@ -83,32 +80,9 @@ const FAQS = [
   },
 ];
 
-function ChevronIcon({ open }: { open: boolean }) {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      aria-hidden="true"
-      style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
-
 export default function FaqPage() {
-  const [open, setOpen] = useState<string | null>(null);
-
-  const toggle = (key: string) => setOpen((prev) => (prev === key ? null : key));
-
   return (
     <>
-      {/* Hero */}
       <section className={styles.hero}>
         <div className={styles.heroContent}>
           <p className={styles.eyebrow}>Preguntas frecuentes</p>
@@ -122,42 +96,12 @@ export default function FaqPage() {
         </div>
       </section>
 
-      {/* FAQ */}
       <section className={styles.faqSection}>
         <div className={styles.container}>
-          {FAQS.map((grupo) => (
-            <div key={grupo.grupo} className={styles.grupo}>
-              <h2 className={styles.grupoTitle}>{grupo.grupo}</h2>
-              <div className={styles.accordion}>
-                {grupo.items.map((item) => {
-                  const key = `${grupo.grupo}-${item.q}`;
-                  const isOpen = open === key;
-                  return (
-                    <div key={key} className={`${styles.item} ${isOpen ? styles.itemOpen : ""}`}>
-                      <button
-                        type="button"
-                        className={styles.question}
-                        onClick={() => toggle(key)}
-                        aria-expanded={isOpen}
-                      >
-                        <span>{item.q}</span>
-                        <ChevronIcon open={isOpen} />
-                      </button>
-                      {isOpen && (
-                        <div className={styles.answer}>
-                          <p>{item.a}</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+          <FaqAccordion grupos={FAQS} />
         </div>
       </section>
 
-      {/* CTA */}
       <section className={styles.cta}>
         <div className={styles.ctaInner}>
           <h2 className={styles.ctaTitle}>¿Listo para importar?</h2>

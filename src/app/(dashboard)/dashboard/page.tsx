@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { EstadoPedido } from "@/lib/supabase/types";
+import { formatUSD, formatDate } from "@/lib/utils/format";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = { title: "Mi cuenta | Hornet Imports" };
@@ -24,22 +25,6 @@ const STATUS_COLOR: Record<EstadoPedido, string> = {
   entregado:   "green",
   cancelado:   "red",
 };
-
-function formatUSD(n: number) {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(n);
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("es-AR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 export default async function DashboardPage() {
   const supabase = await createClient();

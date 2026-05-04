@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import type { EstadoPedido } from "@/lib/supabase/types";
-import type { Database } from "@/lib/supabase/types";
+import type { EstadoPedido, Database } from "@/lib/supabase/types";
+import { formatUSD, formatDate } from "@/lib/utils/format";
 import styles from "./page.module.css";
 
 type PedidoRow = Database["public"]["Tables"]["pedidos"]["Row"];
@@ -37,22 +37,6 @@ const STATUS_COLOR: Record<EstadoPedido, string> = {
 };
 
 const PAGE_SIZE = 8;
-
-function formatUSD(n: number) {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(n);
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("es-AR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 function TrackIcon() {
   return (

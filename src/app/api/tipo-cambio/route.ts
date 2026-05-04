@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-const FALLBACK_RATE = 1200;
+// Solo se usa si dolarapi.com falla EN el primer request (cold start).
+// Después de la primera respuesta exitosa se usa cache.rate como fallback real.
+// Actualizar este valor periódicamente si el blue cambia significativamente.
+const FALLBACK_RATE = 1320;
 let cache: { rate: number; ts: number } | null = null;
 const CACHE_TTL = 60 * 60 * 1000; // 1 hora
 

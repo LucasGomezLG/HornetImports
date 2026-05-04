@@ -1,31 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ORDERS_MOCK,
-  ADMIN_STATS,
-  STATUS_LABEL,
-  type OrderStatus,
-} from "@/lib/orders-mock";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { formatUSDInt, formatDate } from "@/lib/utils/format";
+import type { EstadoPedido } from "@/lib/supabase/types";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = { title: "Admin | Hornet Imports" };
 
-function formatUSD(n: number) {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-  }).format(n);
-}
+const STATUS_LABEL: Record<EstadoPedido, string> = {
+  en_proceso:  "En proceso",
+  comprado:    "Comprado",
+  en_transito: "En tránsito",
+  en_aduana:   "En aduana",
+  entregado:   "Entregado",
+  cancelado:   "Cancelado",
+};
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("es-AR", {
-    day: "2-digit",
-    month: "short",
-  });
-}
-
-const STATUS_COLOR: Record<OrderStatus, string> = {
+const STATUS_COLOR: Record<EstadoPedido, string> = {
   en_proceso:  "orange",
   comprado:    "purple",
   en_transito: "blue",
@@ -34,44 +25,58 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
   cancelado:   "red",
 };
 
-export default function AdminPage() {
-  const recent = ORDERS_MOCK.slice(0, 5);
+export default async function AdminPage() {
+  const db = createAdminClient();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  const [
+    { count: pedidosHoy },
+    { data: pedidosMes },
+    { count: vendedores },
+    { count: cotizacionesPendientes },
+    { data: recent },
+  ] = await Promise.all([
+    db.from("pedidos").select("id", { count: "exact", head: true }).gte("created_at", today.toISOString()),
+    db.from("pedidos").select("precio_usd").gte("created_at", monthStart.toISOString()).neq("estado", "cancelado"),
+    db.from("profiles").select("id", { count: "exact", head: true }).eq("tipo", "vendedor"),
+    db.from("cotizaciones").select("id", { count: "exact", head: true }).eq("estado", "pendiente"),
+    db.from("pedidos").select("*").order("created_at", { ascending: false }).limit(5),
+  ]);
+
+  const ingresosUsd = (pedidosMes ?? []).reduce((sum, p) => sum + p.precio_usd, 0);
 
   return (
     <div className={styles.page}>
-      {/* Stats */}
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Pedidos hoy</span>
-          <span className={styles.statNum}>{ADMIN_STATS.pedidosHoy}</span>
-          <span className={styles.statNote}>+2 vs ayer</span>
+          <span className={styles.statNum}>{pedidosHoy ?? 0}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Ingresos del mes</span>
-          <span className={styles.statNum}>{formatUSD(ADMIN_STATS.ingresosUsd)}</span>
-          <span className={styles.statNote}>USD</span>
+          <span className={styles.statNum}>{formatUSDInt(ingresosUsd)}</span>
+          <span className={styles.statNote}>pedidos no cancelados</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Vendedores activos</span>
-          <span className={styles.statNum}>{ADMIN_STATS.vendedoresActivos}</span>
-          <span className={styles.statNote}>+1 este mes</span>
+          <span className={styles.statNum}>{vendedores ?? 0}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Cotizaciones pendientes</span>
           <span className={`${styles.statNum} ${styles.statNumWarning}`}>
-            {ADMIN_STATS.cotizacionesPendientes}
+            {cotizacionesPendientes ?? 0}
           </span>
           <span className={styles.statNote}>Sin responder</span>
         </div>
       </div>
 
-      {/* Recent orders */}
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Pedidos recientes</h2>
-          <Link href="/admin/pedidos" className={styles.sectionLink}>
-            Ver todos →
-          </Link>
+          <Link href="/admin/pedidos" className={styles.sectionLink}>Ver todos →</Link>
         </div>
 
         <div className={styles.tableWrapper}>
@@ -80,28 +85,28 @@ export default function AdminPage() {
               <tr>
                 <th>ID</th>
                 <th>Producto</th>
-                <th>Comprador</th>
                 <th>Estado</th>
                 <th>Precio</th>
                 <th>Fecha</th>
               </tr>
             </thead>
             <tbody>
-              {recent.map((order) => (
+              {(recent ?? []).length === 0 ? (
+                <tr><td colSpan={5} className={styles.tdEmpty}>No hay pedidos aún.</td></tr>
+              ) : (recent ?? []).map((order) => (
                 <tr key={order.id}>
                   <td className={styles.tdId}>{order.id}</td>
                   <td className={styles.tdProducto}>
-                    <span>{order.producto}</span>
-                    <span className={styles.origen}>{order.origen}</span>
+                    <span>{order.producto_nombre}</span>
+                    {order.origen && <span className={styles.origen}>{order.origen}</span>}
                   </td>
-                  <td className={styles.tdComprador}>{order.comprador}</td>
                   <td>
                     <span className={`${styles.statusChip} ${styles[`status_${STATUS_COLOR[order.estado]}`]}`}>
                       {STATUS_LABEL[order.estado]}
                     </span>
                   </td>
-                  <td className={styles.tdPrecio}>{formatUSD(order.precioUsd)}</td>
-                  <td className={styles.tdFecha}>{formatDate(order.fecha)}</td>
+                  <td className={styles.tdPrecio}>{formatUSDInt(order.precio_usd)}</td>
+                  <td className={styles.tdFecha}>{formatDate(order.created_at, false)}</td>
                 </tr>
               ))}
             </tbody>
@@ -109,7 +114,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Quick actions */}
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Acciones rápidas</h2>
         <div className={styles.actionsGrid}>
