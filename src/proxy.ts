@@ -4,10 +4,9 @@ import { NextResponse, type NextRequest } from "next/server";
 const PROTECTED = ["/dashboard", "/pedidos"];
 const ADMIN = ["/admin"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // Si no hay variables de entorno configuradas, dejar pasar todo
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseKey) {
@@ -49,7 +48,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
   } catch {
-    // Si Supabase falla, dejar pasar sin redirigir
     return NextResponse.next();
   }
 
