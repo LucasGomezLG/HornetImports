@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
 
-const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 type TipoCuenta = "comprador" | "vendedor";
 
@@ -16,7 +15,7 @@ export default function RegistroPage() {
       <div className={styles.card}>
         <Link href="/" className={styles.logo}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`${BASE}/logo.png`} alt="Hornet Imports" width={36} height={36} />
+          <img src={"/logo.png"} alt="Hornet Imports" width={36} height={36} />
           <span className={styles.logoText}>Hornet Imports</span>
         </Link>
 

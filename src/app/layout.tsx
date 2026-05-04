@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     title: "Hornet Imports | Importá sin límites",
     description:
       "Marketplace argentino con comisión 8–12% vs el 13–17% de Mercado Libre. Importación directa sin trámites.",
-    url: "https://lucasgomezlg.github.io/HornetImports",
+    url: "https://hornet-imports.vercel.app",
     siteName: "Hornet Imports",
     locale: "es_AR",
     type: "website",

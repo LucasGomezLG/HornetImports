@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./Header.module.css";
 
-const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const NAV_LINKS = [
   {
@@ -129,7 +128,7 @@ export default function Header() {
         <div className={styles.inner}>
           <Link href="/" className={styles.logo} onClick={close}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${BASE}/logo.png`} alt="Hornet Imports" width={36} height={36} />
+            <img src={"/logo.png"} alt="Hornet Imports" width={36} height={36} />
             <span className={styles.logoText}>Hornet Imports</span>
           </Link>
 
@@ -180,7 +179,7 @@ export default function Header() {
         <div className={styles.drawerHeader}>
           <Link href="/" className={styles.drawerLogo} onClick={close}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${BASE}/logo.png`} alt="Hornet Imports" width={32} height={32} />
+            <img src={"/logo.png"} alt="Hornet Imports" width={32} height={32} />
             <span className={styles.drawerLogoText}>Hornet Imports</span>
           </Link>
           <button

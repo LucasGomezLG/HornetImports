@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://lucasgomezlg.github.io/HornetImports/sitemap.xml
+Sitemap: https://hornet-imports.vercel.app/sitemap.xml
