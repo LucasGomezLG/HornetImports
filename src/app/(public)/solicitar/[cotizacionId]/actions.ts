@@ -1,12 +1,12 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { crearPreferencia } from "@/lib/mp/client";
 import { sendPedidoConfirmado, sendAlertaNuevoPedido } from "@/lib/email/send";
 
 export async function confirmarPedido(
   cotizacionId: string
-): Promise<{ error: string } | void> {
+): Promise<{ error: string } | { mpUrl: string } | { redirect: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -43,11 +43,26 @@ export async function confirmarPedido(
     .update({ estado: "aprobada" })
     .eq("id", cotizacionId);
 
-  // Emails en background — no bloquean el redirect si fallan
-  const email = user.email ?? "";
-  const producto = cotizacion.nombre_producto;
-  try { await sendPedidoConfirmado(email, producto, pedido.id); } catch { /* */ }
-  try { await sendAlertaNuevoPedido(producto, pedido.id, email); } catch { /* */ }
+  // Intentar crear preferencia de MercadoPago
+  if (process.env.MP_ACCESS_TOKEN) {
+    try {
+      const preferencia = await crearPreferencia(
+        pedido.id,
+        cotizacion.nombre_producto,
+        cotizacion.costo_total_ars
+      );
+      if (preferencia.init_point) {
+        return { mpUrl: preferencia.init_point };
+      }
+    } catch {
+      // Si MP falla, no bloqueamos — flujo sin pago online
+    }
+  }
 
-  redirect("/pedidos");
+  // Fallback sin MP: emails y redirect directo
+  const email = user.email ?? "";
+  try { await sendPedidoConfirmado(email, cotizacion.nombre_producto, pedido.id); } catch { /* */ }
+  try { await sendAlertaNuevoPedido(cotizacion.nombre_producto, pedido.id, email); } catch { /* */ }
+
+  return { redirect: "/pedidos" };
 }

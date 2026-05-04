@@ -4,6 +4,31 @@
   gap: var(--space-6);
 }
 
+/* ── Perfil banner ─────────────────────────────────────── */
+.perfilBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: #92400e;
+  transition: background 0.15s;
+}
+
+.perfilBanner:hover { background: #fef3c7; }
+.perfilBanner svg { flex-shrink: 0; color: #d97706; }
+.perfilBanner span { flex: 1; }
+
+.perfilBannerCta {
+  font-weight: 700;
+  color: #d97706;
+  white-space: nowrap;
+  flex: unset !important;
+}
+
 /* ── Welcome ───────────────────────────────────────────── */
 .welcome {
   display: flex;

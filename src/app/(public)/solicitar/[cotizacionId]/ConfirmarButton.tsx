@@ -12,7 +12,9 @@ export default function ConfirmarButton({ cotizacionId }: { cotizacionId: string
     setError(null);
     startTransition(async () => {
       const result = await confirmarPedido(cotizacionId);
-      if (result?.error) setError(result.error);
+      if ("error" in result) { setError(result.error); return; }
+      if ("mpUrl" in result) { window.location.href = result.mpUrl; return; }
+      if ("redirect" in result) { window.location.href = result.redirect; }
     });
   }
 
