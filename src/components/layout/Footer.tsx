@@ -23,6 +23,8 @@ export default function Footer() {
           <Link href="/seguimiento" className={styles.link}>Seguimiento</Link>
           <Link href="/mayorista" className={styles.link}>Mayoristas</Link>
           <Link href="/vender" className={styles.link}>Vendé aquí</Link>
+          <Link href="/como-funciona" className={styles.link}>Cómo funciona</Link>
+          <Link href="/faq" className={styles.link}>FAQ</Link>
           <Link href="/nosotros" className={styles.link}>Nosotros</Link>
           <Link href="/terminos" className={styles.link}>Términos</Link>
           <Link href="/privacidad" className={styles.link}>Privacidad</Link>

@@ -1,0 +1,313 @@
+/* ── Hero ──────────────────────────────────────────────── */
+.hero {
+  background: linear-gradient(155deg, #1d2b3a 0%, #152028 100%);
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(155deg, #1d2b3a 0%, #152028 100%);
+  background-size: 28px 28px, cover;
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+}
+
+.heroContent { max-width: 680px; margin: 0 auto; }
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-3);
+}
+
+.heroTitle {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: var(--space-4);
+}
+
+.accent { color: var(--color-accent); }
+
+.heroSubtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: var(--space-8);
+}
+
+.indexRow {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.indexChip {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+  color: rgba(255, 255, 255, 0.75);
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.indexChip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* ── Shared ────────────────────────────────────────────── */
+.container {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+.modulo {
+  background: var(--color-bg);
+  padding: var(--space-12) var(--space-6);
+  border-top: 1px solid var(--color-border);
+}
+
+.moduloAlt { background: var(--color-surface); }
+
+.moduloHeader {
+  margin-bottom: var(--space-10);
+}
+
+.moduloBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+  background: rgba(245, 166, 35, 0.1);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-4);
+}
+
+.moduloTitle {
+  font-size: clamp(1.4rem, 2.5vw, 1.875rem);
+  font-weight: 800;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-3);
+}
+
+.moduloSubtitle {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  max-width: 520px;
+}
+
+/* ── Vertical steps ────────────────────────────────────── */
+.pasos { max-width: 560px; }
+
+.pasoItem {
+  display: flex;
+  gap: var(--space-5);
+}
+
+.pasoLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.pasoNum {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pasoLine {
+  width: 2px;
+  flex: 1;
+  background: rgba(245, 166, 35, 0.2);
+  margin: var(--space-2) 0;
+  min-height: 28px;
+}
+
+.pasoContent { padding-bottom: var(--space-7); }
+
+.pasoTitulo {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+  margin-top: 6px;
+}
+
+.pasoDesc {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+}
+
+/* ── Horizontal steps ──────────────────────────────────── */
+.pasosHorizontal {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-6);
+  position: relative;
+  margin-bottom: var(--space-8);
+}
+
+.pasoH {
+  flex: 1;
+  position: relative;
+}
+
+.pasoHNum {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-3);
+}
+
+.pasoHTitulo {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+}
+
+.pasoHDesc {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.arrowRight {
+  position: absolute;
+  right: calc(-1 * var(--space-6) / 2 - 8px);
+  top: 8px;
+  color: var(--color-accent);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* ── CTA ───────────────────────────────────────────────── */
+.moduloCta {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+}
+
+.btnPrimary {
+  display: inline-block;
+  padding: var(--space-3) var(--space-7);
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btnPrimary:hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
+}
+
+.btnSecondary {
+  display: inline-block;
+  padding: var(--space-3) var(--space-7);
+  background: var(--color-primary);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  transition: opacity 0.15s;
+}
+
+.btnSecondary:hover { opacity: 0.85; }
+
+.btnOutline {
+  display: inline-block;
+  padding: var(--space-3) var(--space-7);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btnOutline:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+/* ── FAQ link ──────────────────────────────────────────── */
+.faqLink {
+  background: var(--color-primary);
+  padding: var(--space-8) var(--space-6);
+}
+
+.faqLinkInner {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.faqLinkText {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.btnAccent {
+  display: inline-block;
+  padding: var(--space-3) var(--space-7);
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btnAccent:hover { background: var(--color-accent-hover); }
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .pasosHorizontal {
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .arrowRight { display: none; }
+
+  .faqLinkInner { flex-direction: column; text-align: center; }
+}

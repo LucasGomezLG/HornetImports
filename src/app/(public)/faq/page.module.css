@@ -1,0 +1,194 @@
+/* ── Hero ──────────────────────────────────────────────── */
+.hero {
+  background: linear-gradient(155deg, #1d2b3a 0%, #152028 100%);
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(155deg, #1d2b3a 0%, #152028 100%);
+  background-size: 28px 28px, cover;
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+}
+
+.heroContent { max-width: 600px; margin: 0 auto; }
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-3);
+}
+
+.heroTitle {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-4);
+}
+
+.heroSubtitle {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+}
+
+.heroEmail {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── FAQ Section ───────────────────────────────────────── */
+.faqSection {
+  background: var(--color-bg);
+  padding: var(--space-12) var(--space-6);
+}
+
+.container {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+/* ── Group ─────────────────────────────────────────────── */
+.grupo { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.grupoTitle {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* ── Accordion ─────────────────────────────────────────── */
+.accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.itemOpen {
+  border-color: rgba(245, 166, 35, 0.4);
+}
+
+.question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.4;
+  transition: color 0.15s;
+}
+
+.question:hover { color: var(--color-primary); }
+
+.itemOpen .question { color: var(--color-primary); }
+
+.question svg {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.itemOpen .question svg { color: var(--color-accent); }
+
+.answer {
+  padding: 0 var(--space-5) var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.answer p {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.75;
+  padding-top: var(--space-3);
+}
+
+/* ── CTA ───────────────────────────────────────────────── */
+.cta {
+  background: var(--color-primary);
+  padding: var(--space-12) var(--space-6);
+}
+
+.ctaInner {
+  max-width: 520px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.ctaTitle {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-3);
+}
+
+.ctaSubtitle {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: var(--space-8);
+}
+
+.ctaBtns {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btnPrimary {
+  display: inline-block;
+  padding: var(--space-3) var(--space-7);
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btnPrimary:hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
+}
+
+.btnSecondary {
+  display: inline-block;
+  padding: var(--space-3) var(--space-7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btnSecondary:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+}

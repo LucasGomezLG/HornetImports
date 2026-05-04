@@ -67,15 +67,35 @@ const DRAWER_NEGOCIOS = [
   },
 ];
 
-const DRAWER_EMPRESA = {
-  href: "/nosotros",
-  label: "Sobre nosotros",
-  icon: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/>
-    </svg>
-  ),
-};
+const DRAWER_EMPRESA = [
+  {
+    href: "/como-funciona",
+    label: "Cómo funciona",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/faq",
+    label: "Preguntas frecuentes",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M9 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5" fill="currentColor"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/nosotros",
+    label: "Sobre nosotros",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/>
+      </svg>
+    ),
+  },
+];
 
 function ChevronRight() {
   return (
@@ -208,17 +228,20 @@ export default function Header() {
           ))}
 
           <p className={styles.drawerSectionLabel} style={{ marginTop: "var(--space-4)" }}>Empresa</p>
-          <Link
-            href={DRAWER_EMPRESA.href}
-            className={`${styles.drawerLink} ${isActive(DRAWER_EMPRESA.href) ? styles.drawerLinkActive : ""}`}
-            onClick={close}
-          >
-            <span className={styles.drawerLinkLeft}>
-              <span className={styles.drawerLinkIcon}>{DRAWER_EMPRESA.icon}</span>
-              <span>{DRAWER_EMPRESA.label}</span>
-            </span>
-            <ChevronRight />
-          </Link>
+          {DRAWER_EMPRESA.map(({ href, label, icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`${styles.drawerLink} ${isActive(href) ? styles.drawerLinkActive : ""}`}
+              onClick={close}
+            >
+              <span className={styles.drawerLinkLeft}>
+                <span className={styles.drawerLinkIcon}>{icon}</span>
+                <span>{label}</span>
+              </span>
+              <ChevronRight />
+            </Link>
+          ))}
         </nav>
 
         <div className={styles.drawerFooter}>
