@@ -5,6 +5,17 @@ import { calcularCotizacion } from "@/lib/cotizador/calcular";
 import type { InputCotizacion } from "@/lib/cotizador/types";
 import type { Database, Json } from "@/lib/supabase/types";
 
+const rlMap = new Map<string, { count: number; reset: number }>();
+function checkRL(req: NextRequest): boolean {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "anon";
+  const now = Date.now();
+  const e = rlMap.get(ip);
+  if (!e || now > e.reset) { rlMap.set(ip, { count: 1, reset: now + 60_000 }); return true; }
+  if (e.count >= 10) return false;
+  e.count++;
+  return true;
+}
+
 async function getTipoCambio(): Promise<number> {
   try {
     const res = await fetch("https://dolarapi.com/v1/dolares/blue");
@@ -17,9 +28,12 @@ async function getTipoCambio(): Promise<number> {
 }
 
 export async function POST(request: NextRequest) {
+  if (!checkRL(request)) {
+    return NextResponse.json({ ok: false, razon: "rate_limit" }, { status: 429 });
+  }
+
   const body = await request.json() as InputCotizacion;
 
-  // Validación básica de entrada
   if (!body.nombreProducto?.trim() || !body.urlProducto?.trim() || !body.categoriaId) {
     return NextResponse.json({ ok: false, razon: "precio_invalido" }, { status: 400 });
   }

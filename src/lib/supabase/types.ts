@@ -21,6 +21,7 @@ export interface Database {
           email: string;
           nombre: string | null;
           apellido: string | null;
+          telefono: string | null;
           cuit: string | null;
           tipo: TipoCuenta;
           created_at: string;
@@ -30,6 +31,7 @@ export interface Database {
           email: string;
           nombre?: string | null;
           apellido?: string | null;
+          telefono?: string | null;
           cuit?: string | null;
           tipo?: TipoCuenta;
           created_at?: string;
@@ -37,6 +39,7 @@ export interface Database {
         Update: {
           nombre?: string | null;
           apellido?: string | null;
+          telefono?: string | null;
           cuit?: string | null;
           tipo?: TipoCuenta;
         };

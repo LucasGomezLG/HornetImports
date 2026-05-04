@@ -15,6 +15,7 @@ export async function confirmarPedido(
     .from("cotizaciones")
     .select("*")
     .eq("id", cotizacionId)
+    .eq("user_id", user.id)
     .single();
 
   if (cotError || !cotizacion) return { error: "Cotización no encontrada." };

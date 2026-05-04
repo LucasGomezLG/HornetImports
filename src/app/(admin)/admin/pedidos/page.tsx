@@ -2,27 +2,11 @@ import type { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatUSDInt, formatDate } from "@/lib/utils/format";
 import type { EstadoPedido } from "@/lib/supabase/types";
+import PedidoActions from "./PedidoActions";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = { title: "Pedidos | Admin Hornet Imports" };
 
-const STATUS_LABEL: Record<EstadoPedido, string> = {
-  en_proceso:  "En proceso",
-  comprado:    "Comprado",
-  en_transito: "En tránsito",
-  en_aduana:   "En aduana",
-  entregado:   "Entregado",
-  cancelado:   "Cancelado",
-};
-
-const STATUS_COLOR: Record<EstadoPedido, string> = {
-  en_proceso:  "orange",
-  comprado:    "purple",
-  en_transito: "blue",
-  en_aduana:   "yellow",
-  entregado:   "green",
-  cancelado:   "red",
-};
 
 export default async function AdminPedidosPage() {
   const db = createAdminClient();
@@ -59,16 +43,14 @@ export default async function AdminPedidosPage() {
                 <th>ID</th>
                 <th>Producto</th>
                 <th>Comprador</th>
-                <th>Origen</th>
-                <th>Estado</th>
                 <th>Precio</th>
-                <th>Tracking</th>
                 <th>Fecha</th>
+                <th>Estado / Tracking</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 ? (
-                <tr><td colSpan={8} className={styles.tdEmpty}>No hay pedidos aún.</td></tr>
+                <tr><td colSpan={6} className={styles.tdEmpty}>No hay pedidos aún.</td></tr>
               ) : rows.map((order) => {
                 const profile = profileMap.get(order.user_id);
                 const comprador = profile
@@ -79,15 +61,15 @@ export default async function AdminPedidosPage() {
                     <td className={styles.tdId}>{order.id}</td>
                     <td className={styles.tdProducto}>{order.producto_nombre}</td>
                     <td>{comprador}</td>
-                    <td className={styles.tdMuted}>{order.origen ?? "—"}</td>
-                    <td>
-                      <span className={`${styles.statusChip} ${styles[`status_${STATUS_COLOR[order.estado]}`]}`}>
-                        {STATUS_LABEL[order.estado]}
-                      </span>
-                    </td>
                     <td className={styles.tdPrecio}>{formatUSDInt(order.precio_usd)}</td>
-                    <td className={styles.tdTracking}>{order.tracking_code ?? "—"}</td>
                     <td className={styles.tdMuted}>{formatDate(order.created_at, false)}</td>
+                    <td>
+                      <PedidoActions
+                        pedidoId={order.id}
+                        estadoInicial={order.estado}
+                        trackingInicial={order.tracking_code ?? null}
+                      />
+                    </td>
                   </tr>
                 );
               })}
