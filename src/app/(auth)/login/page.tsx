@@ -25,9 +25,14 @@ function LoginForm() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
+      const msg = error.message;
       setError(
-        error.message === "Invalid login credentials"
-          ? "Email o contraseña incorrectos"
+        msg === "Invalid login credentials"
+          ? "Email o contraseña incorrectos."
+          : msg === "Email not confirmed"
+          ? "Confirmá tu email antes de ingresar. Revisá tu bandeja de entrada."
+          : msg.includes("rate") || msg.includes("Too many")
+          ? "Demasiados intentos. Esperá unos minutos e intentá de nuevo."
           : "Ocurrió un error. Intentá de nuevo."
       );
       setLoading(false);

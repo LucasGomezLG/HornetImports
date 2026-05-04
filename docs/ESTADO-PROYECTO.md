@@ -1,6 +1,6 @@
 # Hornet Imports — Estado del proyecto
 
-> Última actualización: mayo 2026  
+> Última actualización: mayo 2026 — incorpora feedback de cliente v1  
 > Stack: Next.js 16.2.4 · Supabase · Resend · MercadoPago · Vercel
 
 ---
@@ -72,6 +72,9 @@ Electrónica con litio · Alimentos y bebidas (SENASA) · Cosméticos y medicame
 | **Toggle Particular / Mayorista** | 🔴 Alta | Primera pantalla del cotizador debe preguntar "¿comprás para vos o para tu negocio?". Dispara pricing diferente, validaciones distintas y canal de soporte distinto. Definido en `05-clientes-dual-mode.md`. |
 | **Modo asistido (60 días)** | 🔴 Alta | Durante los primeros 60 días, el admin debe confirmar manualmente cada cotización antes de que el usuario pueda confirmar el pedido. El panel ya muestra las cotizaciones, pero no hay un flag "confirmada por admin" ni gate en `/solicitar`. |
 | **Validación CUIT + cupo Courier** | 🔴 Alta | El sistema debe verificar que el usuario no haya superado los 12 envíos/año por CUIT (límite AFIP régimen courier). Fase 1: autodeclaración. Fase 2: webservice AFIP A4/A5. |
+| **Simplificación de datos** | 🔴 Alta | Eliminar los campos de dimensiones del paquete (largo/ancho/alto) del formulario. El cálculo de peso volumétrico se reemplaza por un estimado por categoría o se omite usando solo `pesoKg`. Reduce la fricción de entrada significativamente. |
+| **Lógica de origen Europa** | 🟡 Media | Agregar selector de origen (Asia/China · Europa · EE.UU. · Otro). Si origen = Europa y precio > $100 USD, el producto puede estar sujeto a un arancel adicional del 50% si hace escala en EE.UU. El sistema debe: (1) mostrar alerta visible al usuario, (2) agregar flag en la cotización para revisión manual, (3) opcionalmente ajustar el coeficiente de arancel en `calcularCotizacion`. |
+| **Intervención humana por origen** | 🟡 Media | Extensión del modo asistido: cuando una cotización tiene flag de origen europeo, el admin recibe alerta específica y debe revisar la ruta antes de enviar el link de confirmación al usuario. |
 | **Circuit breaker de margen** | 🟡 Media | Si una categoría tiene margen real < 10% en los últimos 10 envíos, desactivarla automáticamente del cotizador y derivar a manual. Requiere registrar el margen real post-envío en DB. |
 | **Panel "Health Check" del cotizador** | 🟡 Media | Dashboard interno que muestra margen predicho vs real por categoría, señal temprana de calibración rota. |
 | **Cobertura cambiaria T+0** | 🟡 Media | Conversión inmediata del cobro en pesos a USDT/USDC vía Binance/Bitso/Lemon Cash al confirmar el pago. Actualmente el spread cambiario está hardcodeado en el fee pero no hay conversión real. |
@@ -198,14 +201,7 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=5491100000000   # sin + ni espacios
 | `profiles` | `id`, `email`, `nombre`, `apellido`, `telefono`*, `cuit`, `tipo` (`comprador`/`vendedor`/`admin`) |
 | `cotizaciones` | `id`, `user_id`, `nombre_producto`, `producto_url`, `precio_usd`, `peso_kg`, `categoria`, `costo_total_ars`, `desglose` (JSON), `estado` |
 | `pedidos` | `id`, `cotizacion_id`, `user_id`, `producto_nombre`, `producto_url`, `precio_usd`, `costo_total_ars`, `estado`, `tracking_code`, `origen` |
-| `listings` | `id`, `vendedor_id`, `titulo`, `precio`, `categoria`, `slug` |
-
-### Migración pendiente
-
-```sql
--- Ejecutar en Supabase → SQL Editor
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS telefono TEXT;
-```
+| `listings` | `id`, `vendedor_id`, `nombre`, `descripcion`, `precio_ars`, `categoria`, `imagen_url`, `stock`, `activo` |
 
 ### Estados de cotización
 
@@ -243,8 +239,10 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS telefono TEXT;
 | **WhatsApp Business API** | 2 | Notificaciones críticas de estado para mayoristas vía Twilio/Meta. |
 | **AFIP Webservice A4/A5** | 2 | Validación automática de CUIT + condición fiscal del vendedor al alta. |
 | **Binance / Bitso / Lemon** | 2 | Conversión T+0 a USDT/USDC para cobertura cambiaria real. |
+| **USDT gateway (Coinbase Commerce / BitPay)** | 3 | Aceptar pagos en cripto directamente en la plataforma. Alternativa: manual via CBU/CVU con confirmación admin. |
 | **Stripe** | 3 | Cobro de fees logísticos a mayoristas internacionales en USD. |
 | **Amazon / eBay / AliExpress APIs** | 2 | Extracción automática de título, precio y dimensiones desde el link del producto. |
+| **Plausible / Posthog** | 1 | Analytics de clics y conversiones. Plausible para métricas de tráfico; Posthog para embudo de cotización → pedido. |
 
 ---
 
@@ -369,22 +367,51 @@ Una devaluación del 15% durante el tránsito liquida el margen si no hay cobert
 
 ---
 
+## Feedback de cliente — mayo 2026
+
+Análisis de los pedidos recibidos, cruzado contra lo que ya existe:
+
+| Pedido | Estado | Notas |
+|---|---|---|
+| MercadoPago | ✅ Implementado | `src/lib/mp/client.ts` + webhook + flujo completo |
+| Dólar Blue automático | ✅ Implementado (cotizador) | Fetchea `dolarapi.com` en cada cotización en tiempo real |
+| Dólar Blue en listings | ❌ Pendiente | `listings.precio_ars` es estático en DB — necesita cron de actualización si hay catálogo propio |
+| Pago en efectivo | ❌ Nuevo | Selector en `/solicitar/[id]`: "Pago online (MP)" vs "Efectivo al retirar". Estado nuevo: `pendiente_pago_efectivo`. Admin confirma recepción. |
+| USDT | ❌ Nuevo (fase 3) | Requiere gateway cripto. Por ahora: manual vía confirmación admin. |
+| Trazabilidad de leads (UTM) | ❌ Nuevo | Capturar `?utm_source` / `utm_medium` / `utm_campaign` al cotizar y guardar en `cotizaciones`. Cambio de schema + captura en frontend. |
+| Control de clics | ❌ En roadmap | Plausible o Posthog — ya estaba planeado |
+| Anti-bypass | ❌ Diseño pendiente | En marketplace: ocultar contacto del vendedor hasta que la transacción se inicie en la plataforma. Para importaciones: el flujo ya requiere todo adentro. |
+| Sección "Conviértete en Mayorista" | ❌ Parcial | Página `/mayorista` existe como landing estático. Falta: cotizador con toggle B2B activo, formulario de alta, pricing escalonado interactivo. |
+| Simplificar cotizador (sin medidas) | ❌ Nuevo | Eliminar `largo`/`ancho`/`alto` del form. Usar solo `pesoKg` + estimado por categoría. Alta prioridad de UX. |
+| Lógica origen Europa | ❌ Nuevo | Selector de origen + alerta de 50% de arancel extra si Europa + escala EEUU + precio > $100 USD. |
+| Intervención humana por origen | ⚠️ Parcial | Cubierto por "modo asistido" pero sin alerta específica de origen europeo. |
+| Tres pilares (cotizador + marketplace empresa + marketplace usuarios) | ⚠️ Parcial | Schema listo. Cotizador ✅. Marketplace UI básica ✅. Panel vendedor ❌. |
+
+---
+
 ## Pendiente inmediato
 
 | Item | Prioridad | Responsable |
 |---|---|---|
-| `ALTER TABLE profiles ADD COLUMN telefono` en Supabase | 🔴 Ops | Lucas |
 | Agregar todas las env vars en Vercel | 🔴 Ops | Lucas |
 | Probar MP con cuenta sandbox | 🔴 QA | Lucas |
+| Promover usuario admin: `UPDATE profiles SET tipo='admin' WHERE email='...'` | 🔴 Ops | Lucas |
+| Simplificación cotizador (eliminar campos de dimensiones) | 🔴 Dev | Pendiente |
+| Lógica de origen Europa + alerta + flag revisión | 🔴 Dev | Pendiente |
+| Pago en efectivo (selector de método en `/solicitar`) | 🔴 Dev | Pendiente |
 | Toggle particular/mayorista en cotizador | 🔴 Dev | Pendiente |
 | Modo asistido (gate admin en cotizaciones) | 🔴 Dev | Pendiente |
 | Validación CUIT + cupo Courier (auto-declaración) | 🔴 Dev | Pendiente |
 | Filtros por estado en admin/pedidos | 🟡 Dev | Pendiente |
+| UTM tracking en cotizaciones | 🟡 Dev | Pendiente |
+| Dólar Blue cron para listings | 🟡 Dev | Solo si hay catálogo propio activo |
 | Rate limiting con Upstash Redis | 🟡 Dev | Pendiente |
 | AfterShip tracking real | 🟡 Dev | Pendiente |
 | MercadoPago: reembolsos / cancelaciones | 🟡 Dev | Pendiente |
 | Panel vendedor (CRUD listings) | 🟡 Dev | Pendiente |
 | Analytics (Plausible o Posthog) | 🟢 Dev | Pendiente |
+| Anti-bypass marketplace (ocultar contacto vendedor) | 🟢 Dev | Pendiente |
+| USDT gateway | 🟢 Dev | Fase 3 |
 
 ---
 

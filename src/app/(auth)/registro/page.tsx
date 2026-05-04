@@ -19,8 +19,9 @@ export default function RegistroPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!terms) { setError("Tenés que aceptar los términos y condiciones"); return; }
-    if (password.length < 8) { setError("La contraseña debe tener al menos 8 caracteres"); return; }
+    if (!nombre.trim()) { setError("El nombre es obligatorio."); return; }
+    if (password.length < 8) { setError("La contraseña debe tener al menos 8 caracteres."); return; }
+    if (!terms) { setError("Tenés que aceptar los términos y condiciones."); return; }
 
     setLoading(true);
     setError(null);
@@ -30,15 +31,18 @@ export default function RegistroPage() {
       email,
       password,
       options: {
-        data: { tipo, nombre },
+        data: { tipo, nombre: nombre.trim() },
         emailRedirectTo: `${window.location.origin}/dashboard`,
       },
     });
 
     if (error) {
+      const msg = error.message;
       setError(
-        error.message.includes("already registered")
-          ? "Ya existe una cuenta con ese email"
+        msg.includes("already registered") || msg.includes("User already registered")
+          ? "Ya existe una cuenta con ese email."
+          : msg.includes("rate") || msg.includes("Too many")
+          ? "Demasiados intentos. Esperá unos minutos e intentá de nuevo."
           : "Ocurrió un error. Intentá de nuevo."
       );
       setLoading(false);
