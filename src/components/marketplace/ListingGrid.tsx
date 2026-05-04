@@ -5,6 +5,14 @@ import Link from "next/link";
 import { LISTINGS_MOCK, CATEGORIAS_MARKETPLACE } from "@/lib/marketplace/listings-mock";
 import styles from "./ListingGrid.module.css";
 
+function SearchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  );
+}
+
 function StarIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -27,14 +35,36 @@ function formatUSD(n: number) {
 
 export default function ListingGrid() {
   const [categoriaActiva, setCategoriaActiva] = useState("todos");
+  const [query, setQuery] = useState("");
 
-  const listings =
-    categoriaActiva === "todos"
-      ? LISTINGS_MOCK
-      : LISTINGS_MOCK.filter((l) => l.categoria === categoriaActiva);
+  const listings = LISTINGS_MOCK
+    .filter((l) => categoriaActiva === "todos" || l.categoria === categoriaActiva)
+    .filter((l) => {
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        l.nombre.toLowerCase().includes(q) ||
+        l.descripcion.toLowerCase().includes(q) ||
+        l.vendedor.toLowerCase().includes(q)
+      );
+    });
 
   return (
     <div className={styles.wrapper}>
+      <div className={styles.searchRow}>
+        <div className={styles.searchWrapper}>
+          <SearchIcon />
+          <input
+            className={styles.searchInput}
+            type="search"
+            placeholder="Buscar producto o vendedor..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Buscar en el marketplace"
+          />
+        </div>
+      </div>
+
       <div className={styles.filterBar}>
         <div className={styles.filterTabs}>
           {CATEGORIAS_MARKETPLACE.map(({ id, label }) => (
