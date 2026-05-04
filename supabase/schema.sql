@@ -119,6 +119,7 @@ CREATE TABLE listings (
   vendedor_id  UUID          NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   nombre       TEXT          NOT NULL,
   descripcion  TEXT,
+  precio_usd   NUMERIC(10,2),
   precio_ars   NUMERIC(14,2) NOT NULL,
   categoria    TEXT          NOT NULL,
   imagen_url   TEXT,

@@ -125,6 +125,7 @@ export interface Database {
           vendedor_id: string;
           nombre: string;
           descripcion: string | null;
+          precio_usd: number | null;
           precio_ars: number;
           categoria: string;
           imagen_url: string | null;
@@ -137,6 +138,7 @@ export interface Database {
           vendedor_id: string;
           nombre: string;
           descripcion?: string | null;
+          precio_usd?: number | null;
           precio_ars: number;
           categoria: string;
           imagen_url?: string | null;

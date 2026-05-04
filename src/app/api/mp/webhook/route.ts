@@ -3,11 +3,12 @@ import { obtenerPago } from "@/lib/mp/client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendAlertaNuevoPedido } from "@/lib/email/send";
 
+const ESTADOS_CANCELACION = new Set(["cancelled", "refunded", "charged_back"]);
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as { type?: string; data?: { id?: string }; action?: string };
 
-    // MP envía distintos formatos según el tipo de notificación
     const paymentId = body.data?.id;
     const type = body.type ?? body.action;
 
@@ -16,36 +17,38 @@ export async function POST(request: NextRequest) {
     }
 
     const pago = await obtenerPago(paymentId);
-
-    if (pago.status !== "approved") {
-      return NextResponse.json({ ok: true });
-    }
-
     const pedidoId = pago.external_reference;
     if (!pedidoId) return NextResponse.json({ ok: true });
 
     const db = createAdminClient();
-    const { data: pedido } = await db
-      .from("pedidos")
-      .select("id, producto_nombre, user_id")
-      .eq("id", pedidoId)
-      .single();
 
-    if (!pedido) return NextResponse.json({ ok: true });
-
-    // Actualiza estado del pedido a "comprado" (pago confirmado por MP)
-    await db.from("pedidos").update({ estado: "comprado" }).eq("id", pedidoId);
-
-    // Alerta interna
-    if (pedido.user_id) {
-      const { data: profile } = await db
-        .from("profiles")
-        .select("email")
-        .eq("id", pedido.user_id)
+    if (pago.status === "approved") {
+      const { data: pedido } = await db
+        .from("pedidos")
+        .select("id, producto_nombre, user_id")
+        .eq("id", pedidoId)
         .single();
-      if (profile?.email) {
-        await sendAlertaNuevoPedido(pedido.producto_nombre, pedidoId, profile.email).catch(() => { });
+
+      if (!pedido) return NextResponse.json({ ok: true });
+
+      await db.from("pedidos").update({ estado: "comprado" }).eq("id", pedidoId);
+
+      if (pedido.user_id) {
+        const { data: profile } = await db
+          .from("profiles")
+          .select("email")
+          .eq("id", pedido.user_id)
+          .single();
+        if (profile?.email) {
+          await sendAlertaNuevoPedido(pedido.producto_nombre, pedidoId, profile.email).catch(() => { });
+        }
       }
+    } else if (ESTADOS_CANCELACION.has(pago.status ?? "")) {
+      await db
+        .from("pedidos")
+        .update({ estado: "cancelado" })
+        .eq("id", pedidoId)
+        .in("estado", ["en_proceso", "comprado"]);
     }
 
     return NextResponse.json({ ok: true });
@@ -54,7 +57,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// MP verifica la URL con un GET inicial
 export async function GET() {
   return NextResponse.json({ ok: true });
 }

@@ -43,6 +43,20 @@
   cursor: default;
   vertical-align: middle;
 }
+
+.utmTag {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  background: #ede9fe;
+  color: #7c3aed;
+  white-space: nowrap;
+  vertical-align: middle;
+  text-transform: lowercase;
+}
 .tdPrecio { font-weight: 600; white-space: nowrap; }
 .tdMuted { color: #9ca3af !important; font-size: 0.82rem; white-space: nowrap; }
 

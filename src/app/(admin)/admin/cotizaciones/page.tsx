@@ -75,6 +75,9 @@ export default async function AdminCotizacionesPage() {
                       {(c.desglose as { alertaOrigenEuropa?: boolean } | null)?.alertaOrigenEuropa && (
                         <span className={styles.europaTag} title="Revisar ruta — origen Europa">🌍</span>
                       )}
+                      {c.utm_source && (
+                        <span className={styles.utmTag}>{c.utm_source}</span>
+                      )}
                     </td>
                     <td className={styles.tdEmail}>{email ?? "Anónimo"}</td>
                     <td className={styles.tdPrecio}>{formatUSDInt(c.precio_usd)}</td>

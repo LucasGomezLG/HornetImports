@@ -9,11 +9,12 @@ interface Props {
   apellido: string;
   telefono: string;
   email: string;
+  cuit: string;
 }
 
 const INIT = { error: null, success: false };
 
-export default function PerfilForm({ nombre, apellido, telefono, email }: Props) {
+export default function PerfilForm({ nombre, apellido, telefono, email, cuit }: Props) {
   const [state, action, isPending] = useActionState(actualizarPerfil, INIT);
 
   return (
@@ -55,6 +56,20 @@ export default function PerfilForm({ nombre, apellido, telefono, email }: Props)
           placeholder="+54 9 11 xxxx-xxxx"
           autoComplete="tel"
         />
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.label} htmlFor="cuit">CUIT / CUIL</label>
+        <input
+          className={styles.input}
+          id="cuit"
+          name="cuit"
+          type="text"
+          defaultValue={cuit}
+          placeholder="20-12345678-9"
+          autoComplete="off"
+        />
+        <p className={styles.hint}>Necesario para gestionar la importación a tu nombre.</p>
       </div>
 
       <div className={styles.field}>
