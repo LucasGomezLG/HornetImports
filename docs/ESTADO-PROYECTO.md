@@ -170,7 +170,7 @@ Si `origen === "europa"` y `precio > USD 100`: el sistema muestra un banner de a
 |---|---|---|
 | `/admin` | ✅ | Métricas del día/mes: pedidos, ingresos, vendedores, cotizaciones pendientes |
 | `/admin/pedidos` | ✅ | Tabla con dropdown de estado + tracking code editable por fila |
-| `/admin/cotizaciones` | ✅ | Tabla con acciones: Enviar link al usuario / Rechazar con motivo |
+| `/admin/cotizaciones` | ✅ | Tabla con acciones: Aprobar (setea flag + envía link) / Rechazar con motivo |
 | `/admin/vendedores` | ✅ | Lista de vendedores con conteo de listings |
 
 ### APIs
@@ -188,7 +188,7 @@ Si `origen === "europa"` y `precio > USD 100`: el sistema muestra un banner de a
 
 | Trigger | Destinatario | Contenido |
 |---|---|---|
-| Admin hace click en "Enviar link" | Usuario | Link para confirmar la cotización |
+| Admin hace click en "Aprobar" | Usuario | Link para confirmar la cotización |
 | Admin rechaza cotización | Usuario | Notificación de rechazo con motivo |
 | Usuario confirma pedido | Usuario | Confirmación con ID de pedido |
 | Usuario confirma pedido | Admin | Alerta de nuevo pedido |
@@ -205,7 +205,7 @@ Si `origen === "europa"` y `precio > USD 100`: el sistema muestra un banner de a
 | Tabla | Campos clave |
 |---|---|
 | `profiles` | `id`, `email`, `nombre`, `apellido`, `telefono`, `cuit`, `tipo` (`comprador`/`vendedor`/`admin`) |
-| `cotizaciones` | `id`, `user_id`, `nombre_producto`, `producto_url`, `precio_usd`, `peso_kg`, `categoria`, `costo_total_ars`, `desglose` (JSONB), `estado` |
+| `cotizaciones` | `id`, `user_id`, `nombre_producto`, `producto_url`, `precio_usd`, `peso_kg`, `categoria`, `costo_total_ars`, `desglose` (JSONB), `estado`, `aprobada_por_admin` (BOOLEAN) |
 | `pedidos` | `id` (HI-XXXX), `cotizacion_id`, `user_id`, `producto_nombre`, `producto_url`, `precio_usd`, `costo_total_ars`, `estado`, `tracking_code`, `origen`, `updated_at` |
 | `listings` | `id`, `vendedor_id`, `nombre`, `descripcion`, `precio_ars`, `categoria`, `imagen_url`, `stock`, `activo` |
 
@@ -312,7 +312,7 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=5491100000000   # sin + ni espacios
 | ~~Toggle Particular / Mayorista~~ | ✅ Hecho | Selector en primera pantalla. Fee 15% / 12%. Mínimos distintos. Badge B2B en resultado. |
 | ~~Simplificación de datos~~ | ✅ Hecho | Eliminados largo/ancho/alto. Solo `pesoKg`. |
 | ~~Lógica de origen Europa~~ | ✅ Hecho | Selector de origen + alerta amarilla + flag en `desglose` JSONB. |
-| **Modo asistido** | 🔴 Pendiente | Admin debe confirmar manualmente cada cotización antes de que el usuario pueda confirmar el pedido. Falta: columna `aprobada_por_admin BOOLEAN` en `cotizaciones` + gate en `/solicitar`. |
+| ~~Modo asistido~~ | ✅ Hecho | Columna `aprobada_por_admin BOOLEAN DEFAULT FALSE` en `cotizaciones`. Gate en `/solicitar/[id]`: si false muestra "en revisión", si true habilita el botón. Admin aprueba con un click + envía email. |
 | **Validación CUIT + cupo Courier** | 🔴 Pendiente | Verificar que el usuario no supere los 12 envíos/año por CUIT (AFIP). Fase 1: autodeclaración en perfil. Fase 2: webservice AFIP A4/A5. |
 | **Intervención humana por origen Europa** | 🟡 Pendiente | Cuando `alertaOrigenEuropa === true`, el admin ve un indicador especial en `/admin/cotizaciones` y debe revisar la ruta antes de enviar el link. |
 | **Circuit breaker de margen** | 🟡 Pendiente | Si una categoría tiene margen real < 10% en los últimos 10 envíos, desactivarla automáticamente. Requiere registrar margen real post-envío. |
@@ -336,13 +336,13 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=5491100000000   # sin + ni espacios
 - ✅ Emails automáticos (confirmación, rechazo, alerta admin)
 - ✅ Dashboard usuario + panel admin básico
 - ✅ Auth completa (registro, login, recuperación, errores específicos)
-- ❌ Modo asistido (gate admin antes de confirmación)
+- ✅ Modo asistido (gate `aprobada_por_admin` + estado "en revisión" para el usuario)
 - ❌ Validación CUIT + cupo Courier
 - **KPI clave:** > 60% de los pedidos migran de WhatsApp a la web
 
 ### Fase 2 — Escala B2B (mes 3–9)
 
-- Modo asistido + intervención por origen Europa
+- ✅ Modo asistido — intervención por origen Europa pendiente
 - Validación CUIT + cupo courier (autodeclaración → AFIP)
 - Descuento escalonado por volumen acumulado
 - Panel mayorista con historial y saldo
@@ -380,6 +380,7 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=5491100000000   # sin + ni espacios
 |---|---|
 | Agregar env vars en Vercel (`SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `MP_ACCESS_TOKEN`, etc.) | 🔴 |
 | Correr SQL del trigger en Supabase (para que `nombre` se guarde al registrarse) | 🔴 |
+| Correr migration `001_add_aprobada_por_admin.sql` en Supabase SQL Editor | 🔴 |
 | Promover primer admin: `UPDATE profiles SET tipo='admin' WHERE email='...'` | 🔴 |
 | Configurar URL en Supabase: `Authentication → URL Configuration → Site URL` | 🔴 |
 | Testear flujo completo con MP sandbox | 🟡 |
@@ -388,7 +389,7 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=5491100000000   # sin + ni espacios
 
 | Item | Complejidad |
 |---|---|
-| Modo asistido (columna `aprobada_por_admin` + gate en `/solicitar`) | Media |
+| ~~Modo asistido~~ | ✅ Hecho |
 | Validación CUIT + cupo Courier en perfil (autodeclaración) | Media |
 | Filtros por estado en `/admin/pedidos` | Baja |
 | UTM tracking (`?utm_source` guardado en cotizaciones) | Baja |
@@ -481,7 +482,7 @@ Un solo envío con arancel 35% y peso mal declarado puede comerse el margen de 2
 
 **Mitigaciones:**
 - Whitelist conservadora (expandir solo con datos reales de envíos realizados)
-- Modo asistido los primeros 60 días — **PENDIENTE**
+- ✅ Modo asistido los primeros 60 días — implementado
 - Circuit breaker por categoría si margen real < 10% en últimos 10 envíos — **PENDIENTE**
 
 ### 🔴 Riesgo #2 — Asfixia regulatoria (AFIP / Aduana)
