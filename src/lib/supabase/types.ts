@@ -58,6 +58,7 @@ export interface Database {
           desglose: Json;
           estado: EstadoCotizacion;
           aprobada_por_admin: boolean;
+          tipo_servicio: string;
           utm_source: string | null;
           created_at: string;
         };
@@ -73,6 +74,7 @@ export interface Database {
           desglose?: Json;
           estado?: EstadoCotizacion;
           aprobada_por_admin?: boolean;
+          tipo_servicio?: string;
           utm_source?: string | null;
           created_at?: string;
         };

@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { CATEGORIAS } from "@/lib/cotizador/categorias";
-import type { InputCotizacion, CotizacionResult, TipoImportacion } from "@/lib/cotizador/types";
+import type { InputCotizacion, CotizacionResult, TipoImportacion, TipoServicio } from "@/lib/cotizador/types";
 import ResultadoCotizacion from "./ResultadoCotizacion";
 import styles from "./CotizadorForm.module.css";
+
+const MIAMI_ADDRESS = "3250 NW 107th Ave, Suite 600 · Doral, FL 33172";
 
 const INPUT_INICIAL: InputCotizacion = {
   nombreProducto: "",
@@ -14,12 +16,8 @@ const INPUT_INICIAL: InputCotizacion = {
   categoriaId: "",
   origen: "asia",
   tipo: "particular",
+  tipoServicio: "completo",
 };
-
-function readUtmSource(): string | undefined {
-  if (typeof window === "undefined") return undefined;
-  return new URLSearchParams(window.location.search).get("utm_source") ?? undefined;
-}
 
 const ORIGENES = [
   { value: "asia",   label: "Asia / China" },
@@ -29,19 +27,30 @@ const ORIGENES = [
 ] as const;
 
 const MENSAJES_ERROR: Record<string, string> = {
-  categoria_blacklist: "Esta categoría requiere cotización manual. Te contactamos en menos de 24 hs.",
-  precio_invalido: "Ingresá el precio del producto en USD.",
-  precio_minimo: "El precio mínimo para importar es USD 25.",
-  precio_minimo_mayorista: "El mínimo para importación mayorista es USD 200 por envío.",
-  peso_excedido: "El peso debe estar entre 0.1 y 30 kg. Para envíos más pesados, escribinos.",
-  rate_limit: "Demasiadas consultas. Esperá un momento e intentá de nuevo.",
+  categoria_blacklist:      "Esta categoría requiere cotización manual. Te contactamos en menos de 24 hs.",
+  precio_invalido:          "Completá todos los campos obligatorios.",
+  precio_minimo:            "El precio mínimo para importar es USD 25.",
+  precio_minimo_mayorista:  "El mínimo para importación mayorista es USD 200 por envío.",
+  peso_excedido:            "El peso debe estar entre 0.1 y 30 kg. Para envíos más pesados, escribinos.",
+  rate_limit:               "Demasiadas consultas. Esperá un momento e intentá de nuevo.",
 };
+
+function readUtmSource(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  return new URLSearchParams(window.location.search).get("utm_source") ?? undefined;
+}
 
 export default function CotizadorForm() {
   const [input, setInput] = useState<InputCotizacion>(INPUT_INICIAL);
   const [resultado, setResultado] = useState<CotizacionResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorManual, setErrorManual] = useState<string | null>(null);
+
+  function handleServicio(tipoServicio: TipoServicio) {
+    setInput((prev) => ({ ...prev, tipoServicio }));
+    setResultado(null);
+    setErrorManual(null);
+  }
 
   function handleTipo(tipo: TipoImportacion) {
     setInput((prev) => ({ ...prev, tipo }));
@@ -62,8 +71,10 @@ export default function CotizadorForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    const esForwarding = input.tipoServicio === "forwarding";
+
     if (!input.nombreProducto.trim()) { setErrorManual("Ingresá el nombre del producto."); return; }
-    if (!input.urlProducto.trim()) { setErrorManual("Ingresá el link del producto."); return; }
+    if (!esForwarding && !input.urlProducto.trim()) { setErrorManual("Ingresá el link del producto."); return; }
     if (!input.categoriaId) { setErrorManual("Seleccioná una categoría."); return; }
     if (!input.pesoKg) { setErrorManual("Ingresá el peso aproximado del paquete."); return; }
 
@@ -93,12 +104,52 @@ export default function CotizadorForm() {
   }
 
   const error = errorManual ?? (resultado && !resultado.ok ? MENSAJES_ERROR[resultado.razon] : null);
-  const esMayorista = input.tipo === "mayorista";
-  const categoriasAuto = CATEGORIAS.filter((c) => !c.blacklist);
+  const esMayorista  = input.tipo === "mayorista";
+  const esForwarding = input.tipoServicio === "forwarding";
+  const categoriasAuto   = CATEGORIAS.filter((c) => !c.blacklist);
   const categoriasManual = CATEGORIAS.filter((c) => c.blacklist);
 
   return (
     <div className={styles.wrapper}>
+
+      {/* Toggle servicio: Completo vs Forwarding */}
+      <div className={styles.servicioToggle}>
+        <button
+          type="button"
+          className={`${styles.servicioBtn} ${!esForwarding ? styles.servicioBtnActive : ""}`}
+          onClick={() => handleServicio("completo")}
+        >
+          <span className={styles.servicioIcon}>🛍️</span>
+          <span className={styles.servicioLabel}>Hornet compra y envía</span>
+          <span className={styles.servicioDesc}>Vos elegís el producto, nosotros hacemos todo</span>
+        </button>
+        <button
+          type="button"
+          className={`${styles.servicioBtn} ${esForwarding ? styles.servicioBtnActive : ""}`}
+          onClick={() => handleServicio("forwarding")}
+        >
+          <span className={styles.servicioIcon}>📦</span>
+          <span className={styles.servicioLabel}>Solo envío (Forwarding)</span>
+          <span className={styles.servicioDesc}>Ya compraste, enviás a Miami y nosotros traemos</span>
+        </button>
+      </div>
+
+      {/* Info box forwarding: dirección Miami */}
+      {esForwarding && (
+        <div className={styles.forwardingBanner}>
+          <div className={styles.forwardingTitle}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            Dirección de nuestro depósito en Miami
+          </div>
+          <p className={styles.forwardingAddress}>{MIAMI_ADDRESS}</p>
+          <p className={styles.forwardingNote}>
+            Incluí tu nombre y número de pedido en el paquete. La dirección completa se confirma por email al aprobar tu cotización.
+          </p>
+        </div>
+      )}
+
       {/* Toggle particular / mayorista */}
       <div className={styles.tipoToggle}>
         <button
@@ -108,7 +159,7 @@ export default function CotizadorForm() {
         >
           <span className={styles.tipoIcon}>🛒</span>
           <span className={styles.tipoLabel}>Importo para mí</span>
-          <span className={styles.tipoDesc}>Particular · Fee 15%</span>
+          <span className={styles.tipoDesc}>Particular · Fee {esForwarding ? "8%" : "15%"}</span>
         </button>
         <button
           type="button"
@@ -117,17 +168,17 @@ export default function CotizadorForm() {
         >
           <span className={styles.tipoIcon}>🏢</span>
           <span className={styles.tipoLabel}>Importo para mi empresa</span>
-          <span className={styles.tipoDesc}>Mayorista · Fee 12%</span>
+          <span className={styles.tipoDesc}>Mayorista · Fee {esForwarding ? "6%" : "12%"}</span>
         </button>
       </div>
 
       {esMayorista && (
         <div className={styles.mayoristaBanner}>
           <div className={styles.mayoristaItems}>
-            <span>✓ Fee reducido al 12% (vs 15% particular)</span>
-            <span>✓ Precios escalonados por volumen acumulado</span>
+            <span>✓ Fee reducido {esForwarding ? "al 6%" : "al 12% (vs 15% particular)"}</span>
+            {!esForwarding && <span>✓ Precios escalonados por volumen acumulado</span>}
             <span>✓ Gestión y soporte prioritario</span>
-            <span>⚠ Mínimo USD 200 por importación</span>
+            {!esForwarding && <span>⚠ Mínimo USD 200 por importación</span>}
           </div>
         </div>
       )}
@@ -139,38 +190,45 @@ export default function CotizadorForm() {
 
       <form className={styles.form} onSubmit={handleSubmit} noValidate>
         <section className={styles.section}>
-          <h3 className={styles.sectionTitle}>Producto</h3>
+          <h3 className={styles.sectionTitle}>{esForwarding ? "Paquete" : "Producto"}</h3>
 
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="nombreProducto">Nombre del producto</label>
+            <label className={styles.label} htmlFor="nombreProducto">
+              {esForwarding ? "Descripción del paquete" : "Nombre del producto"}
+            </label>
             <input
               className={styles.input}
               id="nombreProducto"
               name="nombreProducto"
               type="text"
-              placeholder="Ej: Monitor LG 27 pulgadas 4K"
+              placeholder={esForwarding ? "Ej: Zapatos Nike Air Max talle 42" : "Ej: Monitor LG 27 pulgadas 4K"}
               value={input.nombreProducto}
               onChange={handleChange}
             />
           </div>
 
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="urlProducto">Link del producto</label>
-            <input
-              className={styles.input}
-              id="urlProducto"
-              name="urlProducto"
-              type="url"
-              placeholder="https://www.amazon.com/..."
-              value={input.urlProducto}
-              onChange={handleChange}
-            />
-          </div>
+          {!esForwarding && (
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="urlProducto">Link del producto</label>
+              <input
+                className={styles.input}
+                id="urlProducto"
+                name="urlProducto"
+                type="url"
+                placeholder="https://www.amazon.com/..."
+                value={input.urlProducto}
+                onChange={handleChange}
+              />
+            </div>
+          )}
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="precioUsdProducto">
-              Precio del producto
-              {esMayorista && <span className={styles.labelHint}> · mín. USD 200</span>}
+              {esForwarding ? (
+                <>Valor declarado del producto <span className={styles.labelHint}>(para aduana)</span></>
+              ) : (
+                <>Precio del producto {esMayorista && <span className={styles.labelHint}> · mín. USD 200</span>}</>
+              )}
             </label>
             <div className={styles.inputGroup}>
               <span className={styles.inputPrefix}>USD</span>
@@ -186,6 +244,11 @@ export default function CotizadorForm() {
                 onChange={handleChange}
               />
             </div>
+            {esForwarding && (
+              <p className={styles.hint}>
+                Necesario para calcular los aranceles de aduana. No es lo que nos pagás a nosotros — vos ya pagaste el producto.
+              </p>
+            )}
           </div>
         </section>
 
@@ -213,7 +276,9 @@ export default function CotizadorForm() {
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label} htmlFor="origen">País de origen</label>
+              <label className={styles.label} htmlFor="origen">
+                {esForwarding ? "Origen del paquete" : "País de origen"}
+              </label>
               <select
                 className={styles.select}
                 id="origen"
@@ -229,7 +294,7 @@ export default function CotizadorForm() {
           </div>
 
           <p className={styles.hint}>
-            Máximo 30 kg por envío según el régimen Courier AFIP.
+            Máximo 30 kg por envío.
           </p>
         </section>
 
@@ -285,6 +350,7 @@ export default function CotizadorForm() {
           <ResultadoCotizacion
             desglose={resultado.desglose}
             cotizacionId={resultado.cotizacionId}
+            miamAddress={MIAMI_ADDRESS}
           />
         </div>
       )}

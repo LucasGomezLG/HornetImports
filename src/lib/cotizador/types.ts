@@ -1,5 +1,6 @@
 export type OrigenProducto = "asia" | "europa" | "eeuu" | "otro";
 export type TipoImportacion = "particular" | "mayorista";
+export type TipoServicio = "completo" | "forwarding";
 
 export interface InputCotizacion {
   nombreProducto: string;
@@ -9,6 +10,7 @@ export interface InputCotizacion {
   categoriaId: string;
   origen: OrigenProducto;
   tipo: TipoImportacion;
+  tipoServicio: TipoServicio;
   utmSource?: string;
 }
 
@@ -25,6 +27,8 @@ export interface CotizacionDesglose {
   tipoCambio: number;
   totalArs: number;
   tipoImportacion: TipoImportacion;
+  tipoServicio: TipoServicio;
+  incluyeProducto: boolean;
   alertaOrigenEuropa: boolean;
 }
 

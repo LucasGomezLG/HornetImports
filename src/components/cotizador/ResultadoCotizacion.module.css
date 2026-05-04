@@ -23,6 +23,12 @@
   font-weight: 600;
 }
 
+.badges {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
 .mayoristaBadge {
   background: #16a34a;
   color: #ffffff;
@@ -30,6 +36,17 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.forwardingBadge {
+  background: #1d4ed8;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   padding: 3px 10px;
   border-radius: var(--radius-full);
   white-space: nowrap;
@@ -65,6 +82,60 @@
 .totalHeroUsd {
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.45);
+}
+
+.totalHeroNote {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: var(--space-1);
+  font-style: italic;
+}
+
+.valorDeclarado {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding-left: var(--space-4);
+  color: var(--color-text-muted) !important;
+  font-style: italic;
+}
+
+/* ── Miami box ────────────────────────────────────────── */
+.miamiBox {
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.miamiTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+.miamiAddress {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  font-family: monospace;
+  background: #dbeafe;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  margin: 0;
+}
+
+.miamiNote {
+  font-size: 0.75rem;
+  color: #3b82f6;
+  margin: 0;
 }
 
 /* ── Body ─────────────────────────────────────────────── */

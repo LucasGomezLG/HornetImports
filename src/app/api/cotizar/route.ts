@@ -34,7 +34,11 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json() as InputCotizacion;
 
-  if (!body.nombreProducto?.trim() || !body.urlProducto?.trim() || !body.categoriaId) {
+  const esForwarding = body.tipoServicio === "forwarding";
+  if (!body.nombreProducto?.trim() || !body.categoriaId) {
+    return NextResponse.json({ ok: false, razon: "precio_invalido" }, { status: 400 });
+  }
+  if (!esForwarding && !body.urlProducto?.trim()) {
     return NextResponse.json({ ok: false, razon: "precio_invalido" }, { status: 400 });
   }
 
@@ -76,6 +80,7 @@ export async function POST(request: NextRequest) {
       costo_total_ars: resultado.desglose.totalArs,
       desglose: resultado.desglose as unknown as Json,
       estado: "pendiente",
+      tipo_servicio: body.tipoServicio ?? "completo",
       utm_source: body.utmSource ?? null,
     })
     .select("id")

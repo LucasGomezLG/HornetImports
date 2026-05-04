@@ -44,6 +44,19 @@
   vertical-align: middle;
 }
 
+.forwardingTag {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  background: #dbeafe;
+  color: #1d4ed8;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
 .utmTag {
   display: inline-block;
   margin-left: 6px;

@@ -75,6 +75,9 @@ export default async function AdminCotizacionesPage() {
                       {(c.desglose as { alertaOrigenEuropa?: boolean } | null)?.alertaOrigenEuropa && (
                         <span className={styles.europaTag} title="Revisar ruta — origen Europa">🌍</span>
                       )}
+                      {c.tipo_servicio === "forwarding" && (
+                        <span className={styles.forwardingTag} title="Solo envío — cliente ya compró">📦 Fwd</span>
+                      )}
                       {c.utm_source && (
                         <span className={styles.utmTag}>{c.utm_source}</span>
                       )}
