@@ -90,9 +90,10 @@ CREATE TABLE cotizaciones (
   peso_kg          NUMERIC(6,3)  NOT NULL,
   categoria        TEXT          NOT NULL,
   costo_total_ars  NUMERIC(14,2) NOT NULL,
-  desglose         JSONB         NOT NULL DEFAULT '{}',
-  estado           estado_cotizacion NOT NULL DEFAULT 'pendiente',
-  created_at       TIMESTAMPTZ   NOT NULL DEFAULT now()
+  desglose           JSONB             NOT NULL DEFAULT '{}',
+  estado             estado_cotizacion NOT NULL DEFAULT 'pendiente',
+  aprobada_por_admin BOOLEAN           NOT NULL DEFAULT FALSE,
+  created_at         TIMESTAMPTZ       NOT NULL DEFAULT now()
 );
 
 -- ── pedidos ──────────────────────────────────────────────────

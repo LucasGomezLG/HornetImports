@@ -168,6 +168,52 @@
   color: var(--color-text-muted);
 }
 
+/* ── Pending (en revisión) ────────────────────────────── */
+.pendingCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  box-shadow: var(--shadow-md);
+}
+
+.pendingIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fef9ec;
+  border: 1px solid #fcd34d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d97706;
+}
+
+.pendingTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: -0.01em;
+}
+
+.pendingText {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  max-width: 380px;
+}
+
+.pendingEta {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
 /* ── CTA ──────────────────────────────────────────────── */
 .ctaArea {
   display: flex;

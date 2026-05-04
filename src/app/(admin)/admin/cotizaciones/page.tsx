@@ -86,6 +86,7 @@ export default async function AdminCotizacionesPage() {
                         emailUsuario={email}
                         nombreProducto={c.nombre_producto}
                         estado={c.estado}
+                        aprobadaPorAdmin={c.aprobada_por_admin}
                       />
                     </td>
                   </tr>

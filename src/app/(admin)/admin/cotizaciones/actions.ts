@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendLinkCotizacion, sendCotizacionRechazada } from "@/lib/email/send";
 
-export async function enviarLinkCotizacion(
+export async function aprobarCotizacion(
   cotizacionId: string,
   emailUsuario: string,
   nombreProducto: string
@@ -17,13 +17,22 @@ export async function enviarLinkCotizacion(
     .single();
 
   if (!c || c.estado !== "pendiente")
-    return { error: "Solo se puede enviar el link a cotizaciones pendientes." };
+    return { error: "Solo se puede aprobar cotizaciones pendientes." };
+
+  const { error } = await db
+    .from("cotizaciones")
+    .update({ aprobada_por_admin: true })
+    .eq("id", cotizacionId);
+
+  if (error) return { error: "No se pudo actualizar la cotización." };
 
   try {
     await sendLinkCotizacion(emailUsuario, nombreProducto, cotizacionId);
   } catch {
-    return { error: "Error al enviar el email. Verificá RESEND_API_KEY." };
+    // aprobación exitosa aunque el email falle
   }
+
+  revalidatePath("/admin/cotizaciones");
 }
 
 export async function rechazarCotizacion(

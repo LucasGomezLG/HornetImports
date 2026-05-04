@@ -57,6 +57,7 @@ export interface Database {
           costo_total_ars: number;
           desglose: Json;
           estado: EstadoCotizacion;
+          aprobada_por_admin: boolean;
           created_at: string;
         };
         Insert: {
@@ -70,11 +71,13 @@ export interface Database {
           costo_total_ars: number;
           desglose?: Json;
           estado?: EstadoCotizacion;
+          aprobada_por_admin?: boolean;
           created_at?: string;
         };
         Update: {
           estado?: EstadoCotizacion;
           costo_total_ars?: number;
+          aprobada_por_admin?: boolean;
         };
         Relationships: [];
       };

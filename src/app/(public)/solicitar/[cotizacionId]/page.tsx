@@ -30,12 +30,16 @@ export default async function SolicitarPage({
   }
 
   const desglose = cotizacion.desglose as unknown as CotizacionDesglose;
+  const aprobada = cotizacion.aprobada_por_admin === true;
+  const waLink = `https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "5491100000000"}?text=${encodeURIComponent(`Hola! Tengo una consulta sobre mi importación de ${cotizacion.nombre_producto}`)}`;
 
   return (
     <div className={styles.page}>
       <div className={styles.container}>
         <div className={styles.header}>
-          <p className={styles.eyebrow}>Confirmá tu importación</p>
+          <p className={styles.eyebrow}>
+            {aprobada ? "Confirmá tu importación" : "Cotización enviada"}
+          </p>
           <h1 className={styles.title}>{cotizacion.nombre_producto}</h1>
           {cotizacion.producto_url && (
             <a
@@ -95,20 +99,38 @@ export default async function SolicitarPage({
           </div>
         </div>
 
-        <div className={styles.disclaimer}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          El precio puede variar ±5% según el tipo de cambio al momento del despacho. Tiempo estimado: 15–25 días hábiles.
-        </div>
+        {aprobada ? (
+          <>
+            <div className={styles.disclaimer}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              El precio puede variar ±5% según el tipo de cambio al momento del despacho. Tiempo estimado: 15–25 días hábiles.
+            </div>
 
-        <ConfirmarButton
-          cotizacionId={cotizacionId}
-          mpDisponible={!!process.env.MP_ACCESS_TOKEN}
-        />
+            <ConfirmarButton
+              cotizacionId={cotizacionId}
+              mpDisponible={!!process.env.MP_ACCESS_TOKEN}
+            />
+          </>
+        ) : (
+          <div className={styles.pendingCard}>
+            <div className={styles.pendingIcon}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <h2 className={styles.pendingTitle}>Tu cotización está siendo revisada</h2>
+            <p className={styles.pendingText}>
+              Nuestro equipo está verificando los detalles de tu importación. Te enviaremos un email cuando esté lista para confirmar.
+            </p>
+            <p className={styles.pendingEta}>Tiempo estimado de revisión: menos de 24 hs hábiles.</p>
+          </div>
+        )}
 
         <a
-          href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "5491100000000"}?text=${encodeURIComponent(`Hola! Tengo una consulta sobre mi importación de ${cotizacion.nombre_producto}`)}`}
+          href={waLink}
           target="_blank"
           rel="noopener noreferrer"
           className={styles.whatsappLink}

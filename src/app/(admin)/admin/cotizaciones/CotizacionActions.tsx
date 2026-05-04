@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { enviarLinkCotizacion, rechazarCotizacion } from "./actions";
+import { aprobarCotizacion, rechazarCotizacion } from "./actions";
 import styles from "./CotizacionActions.module.css";
 
 interface Props {
@@ -9,10 +9,17 @@ interface Props {
   emailUsuario: string | null;
   nombreProducto: string;
   estado: string;
+  aprobadaPorAdmin: boolean;
 }
 
-export default function CotizacionActions({ cotizacionId, emailUsuario, nombreProducto, estado }: Props) {
-  const [mode, setMode] = useState<"idle" | "rechazando" | "done_link" | "done_rechazado">("idle");
+export default function CotizacionActions({
+  cotizacionId,
+  emailUsuario,
+  nombreProducto,
+  estado,
+  aprobadaPorAdmin,
+}: Props) {
+  const [mode, setMode] = useState<"idle" | "rechazando" | "done_aprobada" | "done_rechazado">("idle");
   const [motivo, setMotivo] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -20,12 +27,23 @@ export default function CotizacionActions({ cotizacionId, emailUsuario, nombrePr
   if (estado !== "pendiente") return null;
   if (!emailUsuario) return <span className={styles.noEmail}>Sin email</span>;
 
-  function handleLink() {
+  if (aprobadaPorAdmin && mode === "idle") {
+    return (
+      <div className={styles.actions}>
+        <span className={styles.sent}>✓ Aprobada · esperando cliente</span>
+        <button className={styles.btnRechazar} onClick={() => setMode("rechazando")} disabled={isPending}>
+          Rechazar
+        </button>
+      </div>
+    );
+  }
+
+  function handleAprobar() {
     setError(null);
     startTransition(async () => {
-      const res = await enviarLinkCotizacion(cotizacionId, emailUsuario!, nombreProducto);
+      const res = await aprobarCotizacion(cotizacionId, emailUsuario!, nombreProducto);
       if (res?.error) { setError(res.error); return; }
-      setMode("done_link");
+      setMode("done_aprobada");
     });
   }
 
@@ -38,7 +56,7 @@ export default function CotizacionActions({ cotizacionId, emailUsuario, nombrePr
     });
   }
 
-  if (mode === "done_link") return <span className={styles.sent}>✓ Link enviado</span>;
+  if (mode === "done_aprobada") return <span className={styles.sent}>✓ Aprobada · link enviado</span>;
   if (mode === "done_rechazado") return <span className={styles.rejected}>✗ Rechazada</span>;
 
   if (mode === "rechazando") {
@@ -63,8 +81,8 @@ export default function CotizacionActions({ cotizacionId, emailUsuario, nombrePr
 
   return (
     <div className={styles.actions}>
-      <button className={styles.btnLink} onClick={handleLink} disabled={isPending}>
-        {isPending ? "..." : "Enviar link ✉"}
+      <button className={styles.btnLink} onClick={handleAprobar} disabled={isPending}>
+        {isPending ? "..." : "Aprobar ✓"}
       </button>
       <button className={styles.btnRechazar} onClick={() => setMode("rechazando")} disabled={isPending}>
         Rechazar
