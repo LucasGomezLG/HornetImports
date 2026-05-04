@@ -88,7 +88,9 @@
 }
 
 .btnPrimary {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   padding: var(--space-4) var(--space-8);
   background: var(--color-accent);
   color: #ffffff;
@@ -96,30 +98,86 @@
   font-weight: 700;
   border-radius: var(--radius-md);
   letter-spacing: 0.01em;
-  transition: background 0.15s, transform 0.1s;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  box-shadow: 0 4px 14px rgba(245, 166, 35, 0.35);
 }
 
 .btnPrimary:hover {
   background: var(--color-accent-hover);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 166, 35, 0.45);
 }
 
+.btnPrimary:active { transform: translateY(0) scale(0.98); }
+
 .btnSecondary {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   padding: var(--space-4) var(--space-8);
-  background: transparent;
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 1rem;
   font-weight: 600;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-md);
   transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  backdrop-filter: blur(4px);
 }
 
 .btnSecondary:hover {
-  border-color: rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.1);
   transform: translateY(-1px);
+}
+
+.btnSecondary:active { transform: translateY(0) scale(0.98); }
+
+/* ── Trust bar ────────────────────────────────────────── */
+.trustBar {
+  background: var(--color-primary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: var(--space-5) var(--space-6);
+}
+
+.trustInner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.trustItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-3) var(--space-8);
+  text-align: center;
+}
+
+.trustNum {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-accent);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.trustLabel {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.trustDivider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 }
 
 /* ── Features ─────────────────────────────────────────── */
@@ -139,17 +197,41 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--space-8);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.featureCard::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
 }
 
 .featureCard:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+  border-color: rgba(245, 166, 35, 0.25);
+}
+
+.featureCard:hover::before {
+  opacity: 1;
 }
 
 .featureCardFeatured {
   border-color: var(--color-accent);
   box-shadow: 0 0 0 1px var(--color-accent), var(--shadow-md);
+}
+
+.featureCardFeatured::before {
+  opacity: 1;
+  background: var(--color-accent);
 }
 
 .featureIcon {
@@ -384,6 +466,18 @@
 
 /* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 800px) {
+  .trustInner {
+    gap: var(--space-2);
+  }
+
+  .trustDivider {
+    display: none;
+  }
+
+  .trustItem {
+    padding: var(--space-3) var(--space-4);
+  }
+
   .grid3 {
     grid-template-columns: 1fr;
     max-width: 480px;
@@ -416,6 +510,20 @@
 }
 
 @media (max-width: 520px) {
+  .trustInner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-1);
+  }
+
+  .trustItem {
+    padding: var(--space-3);
+  }
+
+  .trustNum {
+    font-size: 1.1rem;
+  }
+
   .hero {
     min-height: auto;
     padding: var(--space-12) var(--space-4);

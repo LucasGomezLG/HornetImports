@@ -5,12 +5,13 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
 
 .card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+  border-color: rgba(245, 166, 35, 0.3);
 }
 
 /* ── Image area ───────────────────────────────────────── */
@@ -129,16 +130,21 @@
   display: block;
   width: 100%;
   padding: var(--space-3);
-  background: var(--color-primary);
+  background: var(--color-accent);
   color: #ffffff;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   text-align: center;
   border-radius: var(--radius-md);
-  transition: background 0.15s;
+  transition: background 0.15s, transform 0.1s;
   margin-top: auto;
 }
 
 .btnComprar:hover {
-  background: var(--color-primary-hover);
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
+}
+
+.btnComprar:active {
+  transform: scale(0.98);
 }

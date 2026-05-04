@@ -8,34 +8,57 @@ import styles from "./Header.module.css";
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const NAV_LINKS = [
-  { href: "/cotizar", label: "Cotizador" },
-  { href: "/tienda", label: "Tienda" },
-  { href: "/marketplace", label: "Marketplace" },
-  { href: "/seguimiento", label: "Seguimiento" },
+  {
+    href: "/cotizar",
+    label: "Cotizador",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/tienda",
+    label: "Tienda",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/marketplace",
+    label: "Marketplace",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/seguimiento",
+    label: "Seguimiento",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      </svg>
+    ),
+  },
 ];
 
-function HamburgerIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <line x1="3" y1="12" x2="21" y2="12" />
-      <line x1="3" y1="18" x2="21" y2="18" />
+const DRAWER_EXTRA = {
+  href: "/mayorista",
+  label: "Para empresas",
+  icon: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
     </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  );
-}
+  ),
+};
 
 function ChevronRight() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
       <polyline points="9 18 15 12 9 6" />
     </svg>
   );
@@ -65,13 +88,19 @@ export default function Header() {
         <div className={styles.inner}>
           <Link href="/" className={styles.logo} onClick={close}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${BASE}/logo.png`} alt="Hornet Imports" width={40} height={40} />
+            <img src={`${BASE}/logo.png`} alt="Hornet Imports" width={36} height={36} />
             <span className={styles.logoText}>Hornet Imports</span>
           </Link>
 
           <nav className={styles.nav}>
             {NAV_LINKS.map(({ href, label }) => (
-              <Link key={href} href={href} className={`${styles.navLink} ${isActive(href) ? styles.navLinkActive : ""}`}>{label}</Link>
+              <Link
+                key={href}
+                href={href}
+                className={`${styles.navLink} ${isActive(href) ? styles.navLinkActive : ""}`}
+              >
+                {label}
+              </Link>
             ))}
           </nav>
 
@@ -80,13 +109,16 @@ export default function Header() {
             <Link href="/cotizar" className={styles.btnCta}>Cotizá ahora</Link>
           </div>
 
+          {/* Hamburger animado */}
           <button
-            className={styles.hamburger}
-            onClick={() => setMenuOpen(true)}
-            aria-label="Abrir menú"
+            className={`${styles.hamburger} ${menuOpen ? styles.hamburgerOpen : ""}`}
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={menuOpen}
           >
-            <HamburgerIcon />
+            <span className={styles.bar} />
+            <span className={styles.bar} />
+            <span className={styles.bar} />
           </button>
         </div>
       </header>
@@ -99,25 +131,57 @@ export default function Header() {
       />
 
       {/* Drawer */}
-      <aside className={`${styles.drawer} ${menuOpen ? styles.drawerOpen : ""}`} aria-label="Menú de navegación">
+      <aside
+        className={`${styles.drawer} ${menuOpen ? styles.drawerOpen : ""}`}
+        aria-label="Menú de navegación"
+        aria-hidden={!menuOpen}
+      >
         <div className={styles.drawerHeader}>
-          <Link href="/" className={styles.logo} onClick={close}>
+          <Link href="/" className={styles.drawerLogo} onClick={close}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${BASE}/logo.png`} alt="Hornet Imports" width={36} height={36} />
-            <span className={styles.logoText}>Hornet Imports</span>
+            <img src={`${BASE}/logo.png`} alt="Hornet Imports" width={32} height={32} />
+            <span className={styles.drawerLogoText}>Hornet Imports</span>
           </Link>
-          <button className={styles.closeBtn} onClick={close} aria-label="Cerrar menú">
-            <CloseIcon />
+          <button
+            className={styles.closeBtn}
+            onClick={close}
+            aria-label="Cerrar menú"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
         </div>
 
         <nav className={styles.drawerNav}>
-          {NAV_LINKS.map(({ href, label }) => (
-            <Link key={href} href={href} className={`${styles.drawerLink} ${isActive(href) ? styles.drawerLinkActive : ""}`} onClick={close}>
-              <span>{label}</span>
+          <p className={styles.drawerSectionLabel}>Plataforma</p>
+          {NAV_LINKS.map(({ href, label, icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`${styles.drawerLink} ${isActive(href) ? styles.drawerLinkActive : ""}`}
+              onClick={close}
+            >
+              <span className={styles.drawerLinkLeft}>
+                <span className={styles.drawerLinkIcon}>{icon}</span>
+                <span>{label}</span>
+              </span>
               <ChevronRight />
             </Link>
           ))}
+
+          <p className={styles.drawerSectionLabel} style={{ marginTop: "var(--space-4)" }}>Negocios</p>
+          <Link
+            href={DRAWER_EXTRA.href}
+            className={`${styles.drawerLink} ${isActive(DRAWER_EXTRA.href) ? styles.drawerLinkActive : ""}`}
+            onClick={close}
+          >
+            <span className={styles.drawerLinkLeft}>
+              <span className={styles.drawerLinkIcon}>{DRAWER_EXTRA.icon}</span>
+              <span>{DRAWER_EXTRA.label}</span>
+            </span>
+            <ChevronRight />
+          </Link>
         </nav>
 
         <div className={styles.drawerFooter}>

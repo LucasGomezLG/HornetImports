@@ -46,7 +46,7 @@
 
 .navLink {
   padding: var(--space-2) var(--space-3);
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.6);
   font-size: 0.875rem;
   font-weight: 500;
   border-radius: var(--radius-sm);
@@ -62,6 +62,7 @@
 .navLinkActive {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.1);
+  font-weight: 600;
 }
 
 /* ── Right side desktop ───────────────────────────────── */
@@ -79,9 +80,14 @@
   font-weight: 500;
   transition: color 0.15s;
   white-space: nowrap;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
 }
 
-.btnLogin:hover { color: #ffffff; }
+.btnLogin:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
 
 .btnCta {
   padding: var(--space-2) var(--space-4);
@@ -91,26 +97,59 @@
   font-weight: 700;
   border-radius: var(--radius-md);
   white-space: nowrap;
-  transition: background 0.15s;
+  transition: background 0.15s, transform 0.1s;
 }
 
 .btnCta:hover { background: var(--color-accent-hover); }
+.btnCta:active { transform: scale(0.97); }
 
-/* ── Hamburger (solo mobile) ──────────────────────────── */
+/* ── Hamburger animado ────────────────────────────────── */
 .hamburger {
   display: none;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 5px;
   width: 40px;
   height: 40px;
   margin-left: auto;
-  color: rgba(255, 255, 255, 0.85);
   border-radius: var(--radius-sm);
-  transition: background 0.15s;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: background 0.15s, border-color 0.15s;
   flex-shrink: 0;
+  padding: 0;
 }
 
-.hamburger:hover { background: rgba(255, 255, 255, 0.08); }
+.hamburger:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.bar {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 2px;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s ease,
+              width 0.2s ease;
+  transform-origin: center;
+}
+
+/* Líneas animadas: hamburger → X */
+.hamburgerOpen .bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.hamburgerOpen .bar:nth-child(2) {
+  opacity: 0;
+  width: 0;
+}
+
+.hamburgerOpen .bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
 
 /* ── Overlay ──────────────────────────────────────────── */
 .overlay {
@@ -123,9 +162,10 @@
 }
 
 .overlayVisible {
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.6);
   pointer-events: auto;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
 }
 
 /* ── Drawer ───────────────────────────────────────────── */
@@ -134,61 +174,92 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: min(320px, 85vw);
-  background: var(--color-primary);
+  width: min(300px, 82vw);
+  background: #0f1a24;
   z-index: 201;
   display: flex;
   flex-direction: column;
   transform: translateX(100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.3);
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.4);
 }
 
 .drawerOpen { transform: translateX(0); }
 
+/* ── Drawer header ────────────────────────────────────── */
 .drawerHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--space-5);
   height: var(--header-height);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   flex-shrink: 0;
+}
+
+.drawerLogo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.drawerLogo img {
+  border-radius: 50%;
+}
+
+.drawerLogoText {
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .closeBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  color: rgba(255, 255, 255, 0.7);
+  width: 34px;
+  height: 34px;
+  color: rgba(255, 255, 255, 0.55);
   border-radius: var(--radius-sm);
-  transition: color 0.15s, background 0.15s;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
 
 .closeBtn:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* ── Drawer nav ───────────────────────────────────────── */
 .drawerNav {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-2) 0;
+  padding: var(--space-4) 0 var(--space-2);
+}
+
+.drawerSectionLabel {
+  padding: 0 var(--space-5);
+  margin-bottom: var(--space-2);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .drawerLink {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-4) var(--space-5);
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 1.0625rem;
+  padding: var(--space-3) var(--space-5);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9375rem;
   font-weight: 500;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0;
   transition: color 0.15s, background 0.15s;
+  margin: 1px 0;
 }
 
 .drawerLink:hover {
@@ -198,12 +269,31 @@
 
 .drawerLinkActive {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.07);
-  border-left: 3px solid var(--color-accent);
-  padding-left: calc(var(--space-5) - 3px);
+  background: rgba(245, 166, 35, 0.1);
+  border-right: 3px solid var(--color-accent);
 }
 
-.drawerLink:last-child { border-bottom: none; }
+.drawerLinkActive .drawerLinkIcon {
+  color: var(--color-accent);
+}
+
+.drawerLinkLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.drawerLinkIcon {
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.4);
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+
+.drawerLink:hover .drawerLinkIcon {
+  color: rgba(255, 255, 255, 0.7);
+}
 
 /* ── Drawer footer ────────────────────────────────────── */
 .drawerFooter {
@@ -211,7 +301,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
   flex-shrink: 0;
 }
 
@@ -219,17 +309,18 @@
   display: block;
   text-align: center;
   padding: var(--space-3) var(--space-4);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-md);
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.75);
   font-weight: 500;
   font-size: 0.9375rem;
-  transition: border-color 0.15s, color 0.15s;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
 
 .drawerBtnLogin:hover {
-  border-color: rgba(255, 255, 255, 0.45);
+  border-color: rgba(255, 255, 255, 0.35);
   color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .drawerBtnCta {
@@ -241,10 +332,11 @@
   color: #ffffff;
   font-weight: 700;
   font-size: 0.9375rem;
-  transition: background 0.15s;
+  transition: background 0.15s, transform 0.1s;
 }
 
 .drawerBtnCta:hover { background: var(--color-accent-hover); }
+.drawerBtnCta:active { transform: scale(0.98); }
 
 /* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 768px) {

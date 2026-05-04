@@ -91,6 +91,31 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Trust bar ───────────────────────────────────── */}
+      <section className={styles.trustBar}>
+        <div className={styles.trustInner}>
+          <div className={styles.trustItem}>
+            <span className={styles.trustNum}>USD 3.000</span>
+            <span className={styles.trustLabel}>Límite por envío</span>
+          </div>
+          <div className={styles.trustDivider} />
+          <div className={styles.trustItem}>
+            <span className={styles.trustNum}>15–25 días</span>
+            <span className={styles.trustLabel}>Puerta a puerta</span>
+          </div>
+          <div className={styles.trustDivider} />
+          <div className={styles.trustItem}>
+            <span className={styles.trustNum}>8–12%</span>
+            <span className={styles.trustLabel}>Comisión marketplace</span>
+          </div>
+          <div className={styles.trustDivider} />
+          <div className={styles.trustItem}>
+            <span className={styles.trustNum}>$0</span>
+            <span className={styles.trustLabel}>Costo de publicar</span>
+          </div>
+        </div>
+      </section>
+
       {/* ── Features ────────────────────────────────────── */}
       <section className={styles.features}>
         <div className={styles.container}>
