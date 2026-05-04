@@ -35,7 +35,7 @@ export default function LoginPage() {
           <div className={styles.field}>
             <div className={styles.labelRow}>
               <label className={styles.label} htmlFor="password">Contraseña</label>
-              <a href="#" className={styles.forgotLink}>¿Olvidaste tu contraseña?</a>
+              <Link href="/recuperar-contrasena" className={styles.forgotLink}>¿Olvidaste tu contraseña?</Link>
             </div>
             <input
               id="password"

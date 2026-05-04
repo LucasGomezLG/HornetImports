@@ -220,7 +220,7 @@ export default function CotizadorForm() {
           </div>
         </section>
 
-        {error && <div className={styles.errorBox}>{error}</div>}
+        {error && <div className={styles.errorBox} role="alert">{error}</div>}
 
         <div className={styles.formFooter}>
           <button type="submit" className={styles.btnSubmit}>

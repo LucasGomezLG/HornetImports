@@ -116,7 +116,10 @@ export default function ProductCard({ producto }: { producto: ProductoTienda }) 
             : `${producto.stock} disponibles`}
         </p>
 
-        <Link href="/cotizar" className={styles.btnComprar}>
+        <Link
+          href={`/registro?plan=comprador&producto=${encodeURIComponent(producto.nombre)}`}
+          className={styles.btnComprar}
+        >
           Comprar
         </Link>
       </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import styles from "./Header.module.css";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -42,6 +43,8 @@ function ChevronRight() {
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const isActive = (href: string) => pathname === href || pathname === `${href}/`;
 
   const close = () => setMenuOpen(false);
 
@@ -68,7 +71,7 @@ export default function Header() {
 
           <nav className={styles.nav}>
             {NAV_LINKS.map(({ href, label }) => (
-              <Link key={href} href={href} className={styles.navLink}>{label}</Link>
+              <Link key={href} href={href} className={`${styles.navLink} ${isActive(href) ? styles.navLinkActive : ""}`}>{label}</Link>
             ))}
           </nav>
 
@@ -110,7 +113,7 @@ export default function Header() {
 
         <nav className={styles.drawerNav}>
           {NAV_LINKS.map(({ href, label }) => (
-            <Link key={href} href={href} className={styles.drawerLink} onClick={close}>
+            <Link key={href} href={href} className={`${styles.drawerLink} ${isActive(href) ? styles.drawerLinkActive : ""}`} onClick={close}>
               <span>{label}</span>
               <ChevronRight />
             </Link>

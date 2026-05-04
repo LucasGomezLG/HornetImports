@@ -50,6 +50,11 @@ export default function ListingGrid() {
         <p className={styles.count}>{listings.length} {listings.length === 1 ? "producto" : "productos"}</p>
       </div>
 
+      {listings.length === 0 && (
+        <div className={styles.empty}>
+          <p>No hay productos en esta categoría todavía.</p>
+        </div>
+      )}
       <div className={styles.grid}>
         {listings.map((listing) => (
           <div key={listing.id} className={styles.card}>

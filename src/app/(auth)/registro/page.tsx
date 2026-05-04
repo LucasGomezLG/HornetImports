@@ -87,9 +87,9 @@ export default function RegistroPage() {
             <input id="terms" type="checkbox" className={styles.checkbox} />
             <label htmlFor="terms" className={styles.checkLabel}>
               Acepto los{" "}
-              <a href="#" className={styles.checkLink}>términos y condiciones</a>
+              <Link href="/terminos" className={styles.checkLink}>términos y condiciones</Link>
               {" "}y la{" "}
-              <a href="#" className={styles.checkLink}>política de privacidad</a>
+              <Link href="/privacidad" className={styles.checkLink}>política de privacidad</Link>
             </label>
           </div>
 
