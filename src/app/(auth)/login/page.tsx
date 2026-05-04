@@ -1,16 +1,49 @@
 "use client";
 
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import styles from "./page.module.css";
 
+function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") ?? "/dashboard";
 
-export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      setError(
+        error.message === "Invalid login credentials"
+          ? "Email o contraseña incorrectos"
+          : "Ocurrió un error. Intentá de nuevo."
+      );
+      setLoading(false);
+      return;
+    }
+
+    router.push(redirect);
+    router.refresh();
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.card}>
         <Link href="/" className={styles.logo}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={"/logo.png"} alt="Hornet Imports" width={36} height={36} />
+          <img src="/logo.png" alt="Hornet Imports" width={36} height={36} />
           <span className={styles.logoText}>Hornet Imports</span>
         </Link>
 
@@ -19,7 +52,7 @@ export default function LoginPage() {
           <p className={styles.subtitle}>Bienvenido de vuelta</p>
         </div>
 
-        <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
+        <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="email">Email</label>
             <input
@@ -28,13 +61,18 @@ export default function LoginPage() {
               className={styles.input}
               placeholder="tu@email.com"
               autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
             />
           </div>
 
           <div className={styles.field}>
             <div className={styles.labelRow}>
               <label className={styles.label} htmlFor="password">Contraseña</label>
-              <Link href="/recuperar-contrasena" className={styles.forgotLink}>¿Olvidaste tu contraseña?</Link>
+              <Link href="/recuperar-contrasena" className={styles.forgotLink}>
+                ¿Olvidaste tu contraseña?
+              </Link>
             </div>
             <input
               id="password"
@@ -42,11 +80,16 @@ export default function LoginPage() {
               className={styles.input}
               placeholder="••••••••"
               autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
             />
           </div>
 
-          <button type="submit" className={styles.btnSubmit}>
-            Ingresar
+          {error && <p className={styles.error}>{error}</p>}
+
+          <button type="submit" className={styles.btnSubmit} disabled={loading}>
+            {loading ? "Ingresando..." : "Ingresar"}
           </button>
         </form>
 
@@ -58,5 +101,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

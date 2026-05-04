@@ -2,14 +2,31 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import styles from "./page.module.css";
 
-
 export default function RecuperarContrasenaPage() {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/actualizar-contrasena`,
+    });
+
+    if (error) {
+      setError("Ocurrió un error. Intentá de nuevo.");
+      setLoading(false);
+      return;
+    }
+
     setEnviado(true);
   }
 
@@ -18,7 +35,7 @@ export default function RecuperarContrasenaPage() {
       <div className={styles.card}>
         <Link href="/" className={styles.logo}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={"/logo.png"} alt="Hornet Imports" width={36} height={36} />
+          <img src="/logo.png" alt="Hornet Imports" width={36} height={36} />
           <span className={styles.logoText}>Hornet Imports</span>
         </Link>
 
@@ -40,11 +57,14 @@ export default function RecuperarContrasenaPage() {
                   className={styles.input}
                   placeholder="tu@email.com"
                   autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
-              <button type="submit" className={styles.btnSubmit}>
-                Enviar link de recuperación
+              {error && <p className={styles.error}>{error}</p>}
+              <button type="submit" className={styles.btnSubmit} disabled={loading}>
+                {loading ? "Enviando..." : "Enviar link de recuperación"}
               </button>
             </form>
           </>
