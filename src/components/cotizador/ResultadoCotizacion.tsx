@@ -16,6 +16,9 @@ export default function ResultadoCotizacion({ desglose, cotizacionId }: Props) {
     <div className={styles.card}>
       <div className={styles.header}>
         <h3 className={styles.headerTitle}>Desglose del costo estimado</h3>
+        {desglose.tipoImportacion === "mayorista" && (
+          <span className={styles.mayoristaBadge}>B2B · Tarifa mayorista {Math.round(desglose.feeRatio * 100)}%</span>
+        )}
       </div>
 
       {/* Total en ARS destacado */}

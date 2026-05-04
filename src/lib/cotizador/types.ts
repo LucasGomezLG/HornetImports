@@ -1,4 +1,5 @@
 export type OrigenProducto = "asia" | "europa" | "eeuu" | "otro";
+export type TipoImportacion = "particular" | "mayorista";
 
 export interface InputCotizacion {
   nombreProducto: string;
@@ -7,6 +8,7 @@ export interface InputCotizacion {
   pesoKg: number;
   categoriaId: string;
   origen: OrigenProducto;
+  tipo: TipoImportacion;
 }
 
 export interface CotizacionDesglose {
@@ -17,9 +19,11 @@ export interface CotizacionDesglose {
   ivaImportacion: number;
   tasaEstadistica: number;
   feeServicio: number;
+  feeRatio: number;
   total: number;
   tipoCambio: number;
   totalArs: number;
+  tipoImportacion: TipoImportacion;
   alertaOrigenEuropa: boolean;
 }
 
@@ -27,6 +31,7 @@ export type RazonRechazo =
   | "categoria_blacklist"
   | "precio_invalido"
   | "precio_minimo"
+  | "precio_minimo_mayorista"
   | "peso_excedido";
 
 export type CotizacionResult =

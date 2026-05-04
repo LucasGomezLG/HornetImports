@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CATEGORIAS } from "@/lib/cotizador/categorias";
-import type { InputCotizacion, CotizacionResult } from "@/lib/cotizador/types";
+import type { InputCotizacion, CotizacionResult, TipoImportacion } from "@/lib/cotizador/types";
 import ResultadoCotizacion from "./ResultadoCotizacion";
 import styles from "./CotizadorForm.module.css";
 
@@ -13,6 +13,7 @@ const INPUT_INICIAL: InputCotizacion = {
   pesoKg: 0,
   categoriaId: "",
   origen: "asia",
+  tipo: "particular",
 };
 
 const ORIGENES = [
@@ -26,6 +27,7 @@ const MENSAJES_ERROR: Record<string, string> = {
   categoria_blacklist: "Esta categoría requiere cotización manual. Te contactamos en menos de 24 hs.",
   precio_invalido: "Ingresá el precio del producto en USD.",
   precio_minimo: "El precio mínimo para importar es USD 25.",
+  precio_minimo_mayorista: "El mínimo para importación mayorista es USD 200 por envío.",
   peso_excedido: "El peso debe estar entre 0.1 y 30 kg. Para envíos más pesados, escribinos.",
   rate_limit: "Demasiadas consultas. Esperá un momento e intentá de nuevo.",
 };
@@ -35,6 +37,12 @@ export default function CotizadorForm() {
   const [resultado, setResultado] = useState<CotizacionResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorManual, setErrorManual] = useState<string | null>(null);
+
+  function handleTipo(tipo: TipoImportacion) {
+    setInput((prev) => ({ ...prev, tipo }));
+    setResultado(null);
+    setErrorManual(null);
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const { name, value, type } = e.target;
@@ -80,11 +88,45 @@ export default function CotizadorForm() {
   }
 
   const error = errorManual ?? (resultado && !resultado.ok ? MENSAJES_ERROR[resultado.razon] : null);
+  const esMayorista = input.tipo === "mayorista";
   const categoriasAuto = CATEGORIAS.filter((c) => !c.blacklist);
   const categoriasManual = CATEGORIAS.filter((c) => c.blacklist);
 
   return (
     <div className={styles.wrapper}>
+      {/* Toggle particular / mayorista */}
+      <div className={styles.tipoToggle}>
+        <button
+          type="button"
+          className={`${styles.tipoBtn} ${!esMayorista ? styles.tipoBtnActive : ""}`}
+          onClick={() => handleTipo("particular")}
+        >
+          <span className={styles.tipoIcon}>🛒</span>
+          <span className={styles.tipoLabel}>Importo para mí</span>
+          <span className={styles.tipoDesc}>Particular · Fee 15%</span>
+        </button>
+        <button
+          type="button"
+          className={`${styles.tipoBtn} ${esMayorista ? styles.tipoBtnActive : ""}`}
+          onClick={() => handleTipo("mayorista")}
+        >
+          <span className={styles.tipoIcon}>🏢</span>
+          <span className={styles.tipoLabel}>Importo para mi empresa</span>
+          <span className={styles.tipoDesc}>Mayorista · Fee 12%</span>
+        </button>
+      </div>
+
+      {esMayorista && (
+        <div className={styles.mayoristaBanner}>
+          <div className={styles.mayoristaItems}>
+            <span>✓ Fee reducido al 12% (vs 15% particular)</span>
+            <span>✓ Precios escalonados por volumen acumulado</span>
+            <span>✓ Gestión y soporte prioritario</span>
+            <span>⚠ Mínimo USD 200 por importación</span>
+          </div>
+        </div>
+      )}
+
       <div className={styles.modoAsistido}>
         <span className={styles.badge}>Modo asistido</span>
         Tu cotización es revisada antes de procesar el cobro.
@@ -121,7 +163,10 @@ export default function CotizadorForm() {
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="precioUsdProducto">Precio del producto</label>
+            <label className={styles.label} htmlFor="precioUsdProducto">
+              Precio del producto
+              {esMayorista && <span className={styles.labelHint}> · mín. USD 200</span>}
+            </label>
             <div className={styles.inputGroup}>
               <span className={styles.inputPrefix}>USD</span>
               <input

@@ -1,6 +1,6 @@
 # Hornet Imports — Estado del proyecto
 
-> Última actualización: mayo 2026 — incorpora feedback de cliente v1  
+> Última actualización: mayo 2026 — v2, toggle particular/mayorista en progreso  
 > Stack: Next.js 16.2.4 · Supabase · Resend · MercadoPago · Vercel
 
 ---
@@ -72,8 +72,8 @@ Electrónica con litio · Alimentos y bebidas (SENASA) · Cosméticos y medicame
 | **Toggle Particular / Mayorista** | 🔴 Alta | Primera pantalla del cotizador debe preguntar "¿comprás para vos o para tu negocio?". Dispara pricing diferente, validaciones distintas y canal de soporte distinto. Definido en `05-clientes-dual-mode.md`. |
 | **Modo asistido (60 días)** | 🔴 Alta | Durante los primeros 60 días, el admin debe confirmar manualmente cada cotización antes de que el usuario pueda confirmar el pedido. El panel ya muestra las cotizaciones, pero no hay un flag "confirmada por admin" ni gate en `/solicitar`. |
 | **Validación CUIT + cupo Courier** | 🔴 Alta | El sistema debe verificar que el usuario no haya superado los 12 envíos/año por CUIT (límite AFIP régimen courier). Fase 1: autodeclaración. Fase 2: webservice AFIP A4/A5. |
-| **Simplificación de datos** | 🔴 Alta | Eliminar los campos de dimensiones del paquete (largo/ancho/alto) del formulario. El cálculo de peso volumétrico se reemplaza por un estimado por categoría o se omite usando solo `pesoKg`. Reduce la fricción de entrada significativamente. |
-| **Lógica de origen Europa** | 🟡 Media | Agregar selector de origen (Asia/China · Europa · EE.UU. · Otro). Si origen = Europa y precio > $100 USD, el producto puede estar sujeto a un arancel adicional del 50% si hace escala en EE.UU. El sistema debe: (1) mostrar alerta visible al usuario, (2) agregar flag en la cotización para revisión manual, (3) opcionalmente ajustar el coeficiente de arancel en `calcularCotizacion`. |
+| ~~**Simplificación de datos**~~ | ✅ Hecho | Eliminados largo/ancho/alto. Solo `pesoKg` + selector de origen. |
+| ~~**Lógica de origen Europa**~~ | ✅ Hecho | Selector Asia/China · EE.UU. · Europa · Otro. Alerta si Europa + precio > USD 100. Flag guardado en `desglose` JSONB. |
 | **Intervención humana por origen** | 🟡 Media | Extensión del modo asistido: cuando una cotización tiene flag de origen europeo, el admin recibe alerta específica y debe revisar la ruta antes de enviar el link de confirmación al usuario. |
 | **Circuit breaker de margen** | 🟡 Media | Si una categoría tiene margen real < 10% en los últimos 10 envíos, desactivarla automáticamente del cotizador y derivar a manual. Requiere registrar el margen real post-envío en DB. |
 | **Panel "Health Check" del cotizador** | 🟡 Media | Dashboard interno que muestra margen predicho vs real por categoría, señal temprana de calibración rota. |
@@ -104,8 +104,8 @@ Electrónica con litio · Alimentos y bebidas (SENASA) · Cosméticos y medicame
 
 | Ruta | Estado | Descripción |
 |---|---|---|
-| `/registro` | ✅ | Registro con email/password |
-| `/login` | ✅ | Login con redirect post-auth |
+| `/registro` | ✅ | Registro con email/password. `nombre` guardado en DB via trigger. Validaciones y mensajes de error completos. |
+| `/login` | ✅ | Login con redirect post-auth. Maneja email no confirmado, rate limit y credenciales incorrectas. |
 | `/recuperar-contrasena` | ✅ | Email de recuperación |
 | `/actualizar-contrasena` | ✅ | Reset via evento `PASSWORD_RECOVERY` de Supabase |
 
@@ -113,8 +113,8 @@ Electrónica con litio · Alimentos y bebidas (SENASA) · Cosméticos y medicame
 
 | Ruta | Estado | Descripción |
 |---|---|---|
-| `/cotizar` → `/api/cotizar` | ✅ | Calcula, guarda en Supabase, retorna `cotizacionId` |
-| `/solicitar/[cotizacionId]` | ✅ | Resumen de costos, confirmación, CTA WhatsApp |
+| `/cotizar` → `/api/cotizar` | ✅ | Calcula, guarda en Supabase, retorna `cotizacionId`. Sin dimensiones — solo peso + origen |
+| `/solicitar/[cotizacionId]` | ✅ | Resumen de costos, selector MercadoPago / Efectivo, CTA WhatsApp |
 | `/pago/exitoso` | ✅ | Post-pago aprobado |
 | `/pago/pendiente` | ✅ | Post-pago en proceso |
 | `/pago/fallido` | ✅ | Error de pago con CTA WhatsApp |
@@ -376,14 +376,14 @@ Análisis de los pedidos recibidos, cruzado contra lo que ya existe:
 | MercadoPago | ✅ Implementado | `src/lib/mp/client.ts` + webhook + flujo completo |
 | Dólar Blue automático | ✅ Implementado (cotizador) | Fetchea `dolarapi.com` en cada cotización en tiempo real |
 | Dólar Blue en listings | ❌ Pendiente | `listings.precio_ars` es estático en DB — necesita cron de actualización si hay catálogo propio |
-| Pago en efectivo | ❌ Nuevo | Selector en `/solicitar/[id]`: "Pago online (MP)" vs "Efectivo al retirar". Estado nuevo: `pendiente_pago_efectivo`. Admin confirma recepción. |
+| Pago en efectivo | ✅ Hecho | Selector 💳 MercadoPago / 💵 Efectivo en `/solicitar/[id]`. MP solo visible si `MP_ACCESS_TOKEN` está seteado. |
 | USDT | ❌ Nuevo (fase 3) | Requiere gateway cripto. Por ahora: manual vía confirmación admin. |
 | Trazabilidad de leads (UTM) | ❌ Nuevo | Capturar `?utm_source` / `utm_medium` / `utm_campaign` al cotizar y guardar en `cotizaciones`. Cambio de schema + captura en frontend. |
 | Control de clics | ❌ En roadmap | Plausible o Posthog — ya estaba planeado |
 | Anti-bypass | ❌ Diseño pendiente | En marketplace: ocultar contacto del vendedor hasta que la transacción se inicie en la plataforma. Para importaciones: el flujo ya requiere todo adentro. |
 | Sección "Conviértete en Mayorista" | ❌ Parcial | Página `/mayorista` existe como landing estático. Falta: cotizador con toggle B2B activo, formulario de alta, pricing escalonado interactivo. |
-| Simplificar cotizador (sin medidas) | ❌ Nuevo | Eliminar `largo`/`ancho`/`alto` del form. Usar solo `pesoKg` + estimado por categoría. Alta prioridad de UX. |
-| Lógica origen Europa | ❌ Nuevo | Selector de origen + alerta de 50% de arancel extra si Europa + escala EEUU + precio > $100 USD. |
+| Simplificar cotizador (sin medidas) | ✅ Hecho | Solo `pesoKg` + selector de origen. |
+| Lógica origen Europa | ✅ Hecho | Alerta amarilla + flag en desglose. |
 | Intervención humana por origen | ⚠️ Parcial | Cubierto por "modo asistido" pero sin alerta específica de origen europeo. |
 | Tres pilares (cotizador + marketplace empresa + marketplace usuarios) | ⚠️ Parcial | Schema listo. Cotizador ✅. Marketplace UI básica ✅. Panel vendedor ❌. |
 
@@ -398,8 +398,8 @@ Análisis de los pedidos recibidos, cruzado contra lo que ya existe:
 | Promover usuario admin: `UPDATE profiles SET tipo='admin' WHERE email='...'` | 🔴 Ops | Lucas |
 | Simplificación cotizador (eliminar campos de dimensiones) | 🔴 Dev | Pendiente |
 | Lógica de origen Europa + alerta + flag revisión | 🔴 Dev | Pendiente |
-| Pago en efectivo (selector de método en `/solicitar`) | 🔴 Dev | Pendiente |
-| Toggle particular/mayorista en cotizador | 🔴 Dev | Pendiente |
+| ~~Pago en efectivo~~ | ✅ Hecho | Selector MP / Efectivo en `/solicitar` |
+| **Toggle particular/mayorista en cotizador** | 🔴 Dev | En progreso |
 | Modo asistido (gate admin en cotizaciones) | 🔴 Dev | Pendiente |
 | Validación CUIT + cupo Courier (auto-declaración) | 🔴 Dev | Pendiente |
 | Filtros por estado en admin/pedidos | 🟡 Dev | Pendiente |

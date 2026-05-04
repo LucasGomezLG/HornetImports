@@ -11,12 +11,28 @@
 .header {
   background: var(--color-primary);
   padding: var(--space-4) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
 }
 
 .headerTitle {
   color: #ffffff;
   font-size: 0.9375rem;
   font-weight: 600;
+}
+
+.mayoristaBadge {
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
 }
 
 /* ── Total hero ───────────────────────────────────────── */

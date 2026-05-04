@@ -4,6 +4,74 @@
   padding: 0 var(--space-4) var(--space-16);
 }
 
+/* ── Toggle particular / mayorista ────────────────────── */
+.tipoToggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.tipoBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-3);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  text-align: center;
+}
+
+.tipoBtn:hover {
+  border-color: var(--color-primary);
+}
+
+.tipoBtnActive {
+  border-color: var(--color-accent);
+  background: #fff9f0;
+  box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.12);
+}
+
+.tipoIcon { font-size: 1.5rem; }
+
+.tipoLabel {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.tipoDesc {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Banner mayorista ─────────────────────────────────── */
+.mayoristaBanner {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.mayoristaItems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: 0.875rem;
+  color: #166534;
+}
+
+.labelHint {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
 /* ── Banner modo asistido ─────────────────────────────── */
 .modoAsistido {
   display: flex;
