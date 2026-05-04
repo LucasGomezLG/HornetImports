@@ -10,7 +10,7 @@ export default function PublicLayout({
   return (
     <>
       <Header />
-      <main style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>{children}</main>
+      <main>{children}</main>
       <Footer />
       <MobileBottomNav />
     </>

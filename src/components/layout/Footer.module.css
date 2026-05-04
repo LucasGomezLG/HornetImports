@@ -107,6 +107,12 @@
   }
 }
 
+@media (max-width: 768px) {
+  .footer {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+}
+
 @media (max-width: 640px) {
   .inner {
     flex-direction: column;
