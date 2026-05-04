@@ -1,13 +1,15 @@
 import Link from "next/link";
-import Image from "next/image";
 import styles from "./Footer.module.css";
+
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export default function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>
         <div className={styles.brand}>
-          <Image src="/logo.png" alt="Hornet Imports" width={32} height={32} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`${BASE}/logo.png`} alt="Hornet Imports" width={32} height={32} />
           <span className={styles.brandText}>Hornet Imports</span>
         </div>
 

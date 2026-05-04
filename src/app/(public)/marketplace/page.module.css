@@ -1,0 +1,84 @@
+.hero {
+  background: linear-gradient(155deg, #1d2b3a 0%, #152028 100%);
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(155deg, #1d2b3a 0%, #152028 100%);
+  background-size: 28px 28px, cover;
+  padding: var(--space-12) var(--space-6);
+}
+
+.heroContent {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-3);
+}
+
+.title {
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: var(--space-3);
+  max-width: 560px;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+  max-width: 520px;
+  margin-bottom: var(--space-8);
+}
+
+/* ── Stats ────────────────────────────────────────────── */
+.stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statNum {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-accent);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.statDivider {
+  width: 1px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ── Grid section ─────────────────────────────────────── */
+.gridSection {
+  background: var(--color-bg);
+  padding-top: var(--space-8);
+}
+
+@media (max-width: 520px) {
+  .stats { gap: var(--space-4); }
+  .statDivider { display: none; }
+}

@@ -1,6 +1,7 @@
 import Link from "next/link";
-import Image from "next/image";
 import styles from "./Header.module.css";
+
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const NAV_LINKS = [
   { href: "/cotizar", label: "Cotizador" },
@@ -14,12 +15,12 @@ export default function Header() {
     <header className={styles.header}>
       <div className={styles.inner}>
         <Link href="/" className={styles.logo}>
-          <Image
-            src="/logo.png"
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`${BASE}/logo.png`}
             alt="Hornet Imports"
             width={40}
             height={40}
-            priority
           />
           <span className={styles.logoText}>Hornet Imports</span>
         </Link>

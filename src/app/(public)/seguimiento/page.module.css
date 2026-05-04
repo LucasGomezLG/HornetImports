@@ -1,0 +1,43 @@
+.hero {
+  background: linear-gradient(155deg, #1d2b3a 0%, #152028 100%);
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(155deg, #1d2b3a 0%, #152028 100%);
+  background-size: 28px 28px, cover;
+  padding: var(--space-12) var(--space-6);
+}
+
+.heroContent {
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-3);
+}
+
+.title {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: var(--space-3);
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+}
+
+.trackSection {
+  background: var(--color-bg);
+  padding-top: var(--space-10);
+}
