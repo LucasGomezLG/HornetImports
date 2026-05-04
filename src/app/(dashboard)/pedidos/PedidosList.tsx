@@ -10,8 +10,8 @@ type PedidoRow = Database["public"]["Tables"]["pedidos"]["Row"];
 
 const FILTERS: { id: EstadoPedido | "todos"; label: string }[] = [
   { id: "todos",       label: "Todos" },
-  { id: "en_proceso",  label: "En proceso" },
-  { id: "comprado",    label: "Comprado" },
+  { id: "en_proceso",  label: "Procesando" },
+  { id: "comprado",    label: "Adquirido" },
   { id: "en_transito", label: "En tránsito" },
   { id: "en_aduana",   label: "En aduana" },
   { id: "entregado",   label: "Entregado" },
@@ -19,9 +19,9 @@ const FILTERS: { id: EstadoPedido | "todos"; label: string }[] = [
 ];
 
 const STATUS_LABEL: Record<EstadoPedido, string> = {
-  en_proceso:  "En proceso",
-  comprado:    "Comprado",
-  en_transito: "En tránsito",
+  en_proceso:  "Procesando",
+  comprado:    "Producto adquirido",
+  en_transito: "En camino a BsAs",
   en_aduana:   "En aduana",
   entregado:   "Entregado",
   cancelado:   "Cancelado",

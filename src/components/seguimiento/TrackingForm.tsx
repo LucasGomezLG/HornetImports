@@ -14,13 +14,13 @@ type EstadoOrden =
   | "entregado";
 
 const ESTADOS: { id: EstadoOrden; label: string; detalle: string }[] = [
-  { id: "recibida",       label: "Orden recibida",           detalle: "Tu solicitud fue registrada en el sistema." },
-  { id: "pago_confirmado",label: "Pago confirmado",          detalle: "El pago fue acreditado correctamente." },
-  { id: "enviado_origen", label: "Enviado desde origen",     detalle: "El paquete salió del depósito en origen." },
-  { id: "en_transito",    label: "En tránsito internacional",detalle: "En vuelo hacia Argentina. ETA: 3–5 días hábiles." },
-  { id: "en_aduana",      label: "En aduana argentina",      detalle: "En proceso de despacho aduanero. Duración habitual: 2–4 días." },
-  { id: "camino_destino", label: "En camino a destino",      detalle: "Con el courier local. Entrega estimada: hoy o mañana." },
-  { id: "entregado",      label: "Entregado",                detalle: "Paquete entregado exitosamente." },
+  { id: "recibida",        label: "Pedido recibido",          detalle: "Tu pedido fue registrado y está siendo revisado por nuestro equipo." },
+  { id: "pago_confirmado", label: "Pago confirmado",          detalle: "El pago fue acreditado. Iniciamos la compra del producto." },
+  { id: "enviado_origen",  label: "Producto adquirido",       detalle: "Compramos tu producto. En camino a nuestro depósito en Miami." },
+  { id: "en_transito",     label: "En camino a Buenos Aires", detalle: "El paquete salió de Miami y está en vuelo hacia Argentina. ETA: 5–10 días hábiles." },
+  { id: "en_aduana",       label: "En aduana argentina",      detalle: "En proceso de despacho aduanero. Duración habitual: 2–4 días." },
+  { id: "camino_destino",  label: "En camino a vos",          detalle: "El paquete salió de nuestro depósito. Te contactamos para coordinar la entrega." },
+  { id: "entregado",       label: "Entregado",                detalle: "Paquete entregado. ¡Gracias por confiar en Hornet Imports!" },
 ];
 
 const PEDIDO_A_ORDEN: Record<string, EstadoOrden> = {

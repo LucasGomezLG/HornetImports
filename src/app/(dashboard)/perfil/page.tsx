@@ -31,7 +31,6 @@ export default async function PerfilPage() {
           apellido={profile?.apellido ?? ""}
           telefono={profile?.telefono ?? ""}
           email={user.email ?? ""}
-          cuit={profile?.cuit ?? ""}
         />
       </div>
     </div>

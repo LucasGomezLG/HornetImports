@@ -1,10 +1,21 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { confirmarPedido } from "./actions";
+import { confirmarPedido, type MetodoPago } from "./actions";
 import styles from "./page.module.css";
 
-type MetodoPago = "mp" | "efectivo";
+const METODOS: { id: MetodoPago; icon: string; label: string; desc: string }[] = [
+  { id: "mp",           icon: "💳", label: "MercadoPago",      desc: "Pago online" },
+  { id: "transferencia",icon: "🏦", label: "Transferencia",    desc: "CBU / Alias" },
+  { id: "cripto",       icon: "₿",  label: "Cripto / USDT",   desc: "USDT · BTC" },
+];
+
+const CTA_NOTE: Record<MetodoPago, string> = {
+  mp:           "Nuestro equipo revisará tu pedido y te contactará en menos de 24 hs.",
+  transferencia:"Te enviaremos los datos bancarios por email para coordinar la transferencia.",
+  cripto:       "Te enviamos la wallet USDT/BTC por email para que realices el pago.",
+  efectivo:     "Coordinaremos el pago en efectivo una vez confirmado tu pedido.",
+};
 
 export default function ConfirmarButton({
   cotizacionId,
@@ -13,9 +24,12 @@ export default function ConfirmarButton({
   cotizacionId: string;
   mpDisponible: boolean;
 }) {
-  const [metodo, setMetodo] = useState<MetodoPago>(mpDisponible ? "mp" : "efectivo");
+  const metodoDefault: MetodoPago = mpDisponible ? "mp" : "transferencia";
+  const [metodo, setMetodo] = useState<MetodoPago>(metodoDefault);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const metodosList = mpDisponible ? METODOS : METODOS.filter((m) => m.id !== "mp");
 
   function handle() {
     setError(null);
@@ -29,28 +43,20 @@ export default function ConfirmarButton({
 
   return (
     <div className={styles.ctaArea}>
-      {mpDisponible && (
-        <div className={styles.metodoPagoGrid}>
+      <div className={styles.metodoPagoGrid} style={{ gridTemplateColumns: `repeat(${metodosList.length}, 1fr)` }}>
+        {metodosList.map((m) => (
           <button
+            key={m.id}
             type="button"
-            className={`${styles.metodoBtn} ${metodo === "mp" ? styles.metodoBtnActive : ""}`}
-            onClick={() => setMetodo("mp")}
+            className={`${styles.metodoBtn} ${metodo === m.id ? styles.metodoBtnActive : ""}`}
+            onClick={() => setMetodo(m.id)}
           >
-            <span className={styles.metodoIcon}>💳</span>
-            <span className={styles.metodoLabel}>MercadoPago</span>
-            <span className={styles.metodoDesc}>Pago online</span>
+            <span className={styles.metodoIcon}>{m.icon}</span>
+            <span className={styles.metodoLabel}>{m.label}</span>
+            <span className={styles.metodoDesc}>{m.desc}</span>
           </button>
-          <button
-            type="button"
-            className={`${styles.metodoBtn} ${metodo === "efectivo" ? styles.metodoBtnActive : ""}`}
-            onClick={() => setMetodo("efectivo")}
-          >
-            <span className={styles.metodoIcon}>💵</span>
-            <span className={styles.metodoLabel}>Efectivo</span>
-            <span className={styles.metodoDesc}>Al retirar / coordinar</span>
-          </button>
-        </div>
-      )}
+        ))}
+      </div>
 
       {error && <p className={styles.errorMsg} role="alert">{error}</p>}
 
@@ -62,11 +68,7 @@ export default function ConfirmarButton({
       >
         {isPending ? "Procesando..." : "Confirmar pedido →"}
       </button>
-      <p className={styles.ctaNote}>
-        {metodo === "efectivo"
-          ? "Coordinaremos el pago en efectivo una vez confirmado tu pedido."
-          : "Nuestro equipo revisará tu pedido y te contactará en menos de 24 hs."}
-      </p>
+      <p className={styles.ctaNote}>{CTA_NOTE[metodo]}</p>
     </div>
   );
 }

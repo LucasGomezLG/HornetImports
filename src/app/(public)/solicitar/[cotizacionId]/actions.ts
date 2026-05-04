@@ -4,9 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { crearPreferencia } from "@/lib/mp/client";
 import { sendPedidoConfirmado, sendAlertaNuevoPedido } from "@/lib/email/send";
 
+export type MetodoPago = "mp" | "transferencia" | "cripto" | "efectivo";
+
 export async function confirmarPedido(
   cotizacionId: string,
-  metodoPago: "mp" | "efectivo" = "mp"
+  metodoPago: MetodoPago = "mp"
 ): Promise<{ error: string } | { mpUrl: string } | { redirect: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
