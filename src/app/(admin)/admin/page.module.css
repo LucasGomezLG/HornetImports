@@ -1,0 +1,195 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* ── Stats ─────────────────────────────────────────────── */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+}
+
+.statCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.statLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+
+.statNum {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #111827;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.statNumWarning { color: #d97706; }
+
+.statNote {
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+/* ── Section ───────────────────────────────────────────── */
+.section {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.sectionLink {
+  font-size: 0.875rem;
+  color: #f5a623;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+
+.sectionLink:hover { opacity: 0.75; }
+
+/* ── Table ─────────────────────────────────────────────── */
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.table th {
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #6b7280;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: var(--space-3) var(--space-3);
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+  vertical-align: middle;
+}
+
+.table tr:last-child td { border-bottom: none; }
+
+.tdId {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #6b7280 !important;
+  white-space: nowrap;
+}
+
+.tdProducto {
+  max-width: 220px;
+}
+
+.tdProducto span {
+  display: block;
+}
+
+.tdProducto span:first-child {
+  font-weight: 500;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.origen {
+  font-size: 0.75rem;
+  color: #9ca3af !important;
+}
+
+.tdComprador { color: #374151; }
+.tdPrecio { font-weight: 600; white-space: nowrap; }
+.tdFecha { white-space: nowrap; color: #6b7280 !important; }
+
+/* ── Status chips ──────────────────────────────────────── */
+.statusChip {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.status_orange { background: #fef3c7; color: #d97706; }
+.status_blue   { background: #dbeafe; color: #2563eb; }
+.status_green  { background: #d1fae5; color: #059669; }
+.status_red    { background: #fee2e2; color: #dc2626; }
+
+/* ── Quick actions ─────────────────────────────────────── */
+.actionsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.actionCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-lg);
+  color: #374151;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.actionCard svg { color: #f5a623; }
+
+.actionCard:hover {
+  border-color: #f5a623;
+  background: #fffbf0;
+}
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .statsGrid { grid-template-columns: repeat(2, 1fr); }
+  .actionsGrid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .statsGrid { grid-template-columns: 1fr; }
+  .actionsGrid { grid-template-columns: repeat(2, 1fr); }
+}

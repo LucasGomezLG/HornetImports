@@ -1,0 +1,212 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* ── Header ────────────────────────────────────────────── */
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.pageTitle {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+
+.btnNuevo {
+  display: inline-block;
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btnNuevo:hover { background: var(--color-accent-hover); }
+
+/* ── Filters ───────────────────────────────────────────── */
+.filterTabs {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tab:hover {
+  border-color: #1d2b3a;
+  color: #111827;
+}
+
+.tabActive {
+  background: #1d2b3a;
+  border-color: #1d2b3a;
+  color: #ffffff;
+}
+
+.tabActive:hover { color: #ffffff; }
+
+.tabCount {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+}
+
+.tabActive .tabCount {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Order list ────────────────────────────────────────── */
+.orderList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.orderCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  transition: border-color 0.15s;
+}
+
+.orderCard:hover { border-color: #d1d5db; }
+
+.orderTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.orderMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.orderId {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.orderProducto {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.3;
+}
+
+.orderPrecio {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #111827;
+  white-space: nowrap;
+}
+
+/* ── Details row ───────────────────────────────────────── */
+.orderDetails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.orderDetail {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* ── Actions ───────────────────────────────────────────── */
+.orderActions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.btnTracking {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+  background: #f9fafb;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.btnTracking:hover {
+  border-color: #f5a623;
+  background: #fffbf0;
+}
+
+/* ── Status chips ──────────────────────────────────────── */
+.statusChip {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.status_orange { background: #fef3c7; color: #d97706; }
+.status_blue   { background: #dbeafe; color: #2563eb; }
+.status_green  { background: #d1fae5; color: #059669; }
+.status_red    { background: #fee2e2; color: #dc2626; }
+
+/* ── Cancel note ───────────────────────────────────────── */
+.cancelNote {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  padding: var(--space-3);
+  background: #f9fafb;
+  border-radius: var(--radius-md);
+}
+
+.cancelLink {
+  color: #f5a623;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── Empty ─────────────────────────────────────────────── */
+.empty {
+  text-align: center;
+  padding: var(--space-12) 0;
+  color: #9ca3af;
+  font-size: 0.9375rem;
+}
