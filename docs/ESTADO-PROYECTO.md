@@ -6,7 +6,31 @@
 
 ---
 
-## Modelo de negocio
+## Modelo de negocio real
+
+### Cómo funciona (para el cliente)
+
+1. El cliente entra a la web y cotiza su producto completando nombre, URL, precio, peso y categoría
+2. El cliente ve el precio estimado en ARS y USD con desglose completo
+3. Si le interesa, confirma y paga (MercadoPago / Transferencia bancaria / Cripto-USDT)
+4. **Hornet gestiona todo lo demás**: compra el producto al proveedor, lo envía al depósito en Miami, luego Miami → Buenos Aires, gestiona la aduana y entrega al cliente
+5. El cliente solo hace una cosa más: seguir el estado de su pedido desde la web
+
+> El cliente **no importa a su nombre**. La importación va en nombre de Hornet Imports como empresa. El compliance aduanero (AFIP, aranceles, regímenes) es 100% responsabilidad de Hornet.
+
+### Flujo logístico interno
+
+```
+Proveedor (Asia / EE.UU. / Europa)
+    ↓
+Depósito Hornet en Miami
+    ↓
+Vuelo Miami → Buenos Aires (Courier internacional)
+    ↓
+Aduana Argentina
+    ↓
+Entrega al cliente (coordinada por Hornet)
+```
 
 ### Segmentos y pricing
 
@@ -15,8 +39,6 @@
 | Particular (B2C) | 15% sobre CIF | — |
 | Mayorista (B2B) | 12% sobre CIF (mín. USD 200/envío) | — |
 | Vendedor del marketplace | — | 8–12% según categoría |
-
-> El cotizador ya implementa la diferencia de fee: 15% particular / 12% mayorista.
 
 ### Descuento por volumen mayorista (target — no implementado aún)
 
@@ -56,12 +78,12 @@ Mix mínimo mensual para cubrir burn-rate (~$1.200 USD/mes):
 ```
 CIF = precio_origen + flete
 flete = peso_facturable × USD 18/kg
-peso_facturable = redondear_al_medio(pesoKg)  ← solo peso real, sin volumétrico
+peso_facturable = redondear_al_medio(pesoKg)   ← solo peso real, sin volumétrico
 
 arancel      = CIF × tasa_categoria (0% – 35%)
 IVA          = (CIF + arancel) × 21%
 tasa_est     = CIF × 3%
-fee_servicio = CIF × fee_ratio  ← 15% particular / 12% mayorista
+fee_servicio = CIF × fee_ratio   ← 15% particular / 12% mayorista
 total_usd    = CIF + arancel + IVA + tasa_est + fee_servicio
 total_ars    = total_usd × tipo_cambio_blue
 ```
@@ -75,7 +97,7 @@ total_ars    = total_usd × tipo_cambio_blue
 | Fee mayorista | 12% sobre CIF |
 | Precio mínimo particular | USD 25 |
 | Precio mínimo mayorista | USD 200 |
-| Peso máximo | 30 kg (régimen Courier AFIP) |
+| Peso máximo | 30 kg |
 | Tipo de cambio | Dólar blue vía dolarapi.com · fallback: $1.200 |
 
 ### Campos del cotizador
@@ -86,7 +108,7 @@ total_ars    = total_usd × tipo_cambio_blue
 - Peso en kg
 - País de origen: Asia/China · EE.UU. · Europa · Otro
 - Categoría
-- Tipo de importación: Particular / Mayorista
+- Tipo de importación: Particular / Mayorista (B2B)
 
 ### Categorías whitelist (cotización automática)
 
@@ -112,7 +134,7 @@ total_ars    = total_usd × tipo_cambio_blue
 
 ### Lógica de origen Europa
 
-Si `origen === "europa"` y `precio > USD 100`: el sistema muestra un banner de alerta amarilla advirtiendo que puede aplicar un arancel adicional del 50% si el producto hace escala en EE.UU. El flag `alertaOrigenEuropa: true` queda guardado en el JSONB de `desglose`.
+Si `origen === "europa"` y `precio > USD 100`: muestra banner de alerta amarilla advirtiendo arancel adicional del 50% si el producto hace escala en EE.UU. El flag `alertaOrigenEuropa: true` se guarda en el JSONB `desglose` y aparece como indicador 🌍 en el panel admin.
 
 ---
 
@@ -131,56 +153,76 @@ Si `origen === "europa"` y `precio > USD 100`: el sistema muestra un banner de a
 | `/nosotros` | ✅ | Página de equipo |
 | `/faq` | ✅ | Accordion de preguntas frecuentes |
 | `/vender` | ✅ | Landing para vendedores |
-| `/mayorista` | ✅ | Propuesta B2B (landing estático — sin formulario de alta aún) |
-| `/seguimiento` | ✅ | Tracking por ID o código; datos reales si el usuario está logueado |
+| `/mayorista` | ✅ | Propuesta B2B (landing estático) |
+| `/seguimiento` | ✅ | Timeline con etapas reales del flujo Miami → BsAs |
 | `/privacidad` · `/terminos` | ✅ | Páginas legales |
 
 ### Autenticación
 
 | Ruta | Estado | Descripción |
 |---|---|---|
-| `/registro` | ✅ | Email/password. `nombre` guardado en DB via trigger. Mensajes de error específicos. |
+| `/registro` | ✅ | Email/password. `nombre` guardado en DB via trigger. Errores específicos. |
 | `/login` | ✅ | Redirect post-auth. Maneja: credenciales incorrectas, email no confirmado, rate limit. |
 | `/recuperar-contrasena` | ✅ | Email de recuperación vía Supabase |
 | `/actualizar-contrasena` | ✅ | Reset via evento `PASSWORD_RECOVERY` |
 
-### Flujo de importación
+### Flujo de importación completo
 
-| Paso | Estado | Descripción |
+| Paso | Quién | Estado | Descripción |
+|---|---|---|---|
+| Cotizar | Cliente | ✅ | `POST /api/cotizar` — calcula, guarda en Supabase, retorna cotizacionId |
+| Ver resultado | Cliente | ✅ | Desglose completo en ARS y USD. Badge B2B si mayorista. Alerta si origen Europa. |
+| Esperar aprobación | Hornet | ✅ | `/solicitar/[id]` muestra "en revisión" hasta que admin apruebe |
+| Aprobar cotización | Admin | ✅ | Admin hace click en "Aprobar" → setea `aprobada_por_admin=true` + envía email al cliente |
+| Elegir método de pago | Cliente | ✅ | MercadoPago · Transferencia bancaria · Cripto / USDT |
+| Pagar | Cliente | ✅ | MP redirige a checkout; Transferencia y Cripto envían instrucciones por email |
+| Confirmar pedido | Sistema | ✅ | Crea pedido HI-XXXX, notifica a admin |
+| Webhook MP | Sistema | ✅ | Pago aprobado → estado `comprado`. Cancelado/reembolsado → estado `cancelado` |
+| Comprar al proveedor | Hornet | (manual) | Hornet realiza la compra al proveedor |
+| Envío a Miami | Hornet | (manual) | Hornet coordina el envío al depósito en Miami |
+| Miami → BsAs | Hornet | (manual) | Vuelo internacional, 5–10 días hábiles |
+| Aduana | Hornet | (manual) | Hornet gestiona el despacho aduanero |
+| Entrega | Hornet | (manual) | Hornet coordina la entrega con el cliente |
+| Seguimiento | Cliente | ✅ | El cliente ve el estado actualizado en `/seguimiento` y `/pedidos` |
+
+### Estados del pedido (vistos por el cliente)
+
+| Estado DB | Label para el cliente | Descripción |
 |---|---|---|
-| Cotizar | ✅ | `POST /api/cotizar` — calcula, guarda en Supabase, retorna `cotizacionId` |
-| Confirmar | ✅ | `/solicitar/[cotizacionId]` — resumen de costos, selector MP / Efectivo, CTA WhatsApp |
-| Pago online | ✅ | Redirige a MercadoPago si `MP_ACCESS_TOKEN` está configurado |
-| Pago efectivo | ✅ | Crea pedido, envía emails, redirige a `/pedidos` |
-| Post-pago | ✅ | `/pago/exitoso` · `/pago/pendiente` · `/pago/fallido` |
-| Webhook MP | ✅ | `POST /api/mp/webhook` — actualiza pedido a `comprado` al confirmar pago |
+| `en_proceso` | Procesando | Admin revisando, coordinando la compra al proveedor |
+| `comprado` | Producto adquirido | Producto comprado, en camino al depósito en Miami |
+| `en_transito` | En camino a Buenos Aires | Vuelo Miami → Argentina |
+| `en_aduana` | En aduana argentina | Despacho aduanero (2–4 días) |
+| `entregado` | Entregado | Entregado exitosamente |
+| `cancelado` | Cancelado | Pedido cancelado o pago revertido |
 
 ### Dashboard usuario
 
 | Ruta | Estado | Descripción |
 |---|---|---|
 | `/dashboard` | ✅ | Stats reales + últimos pedidos + banner de perfil incompleto |
-| `/pedidos` | ✅ | Lista completa con filtros y paginación (8 items/página) |
+| `/pedidos` | ✅ | Lista completa con filtros por estado y paginación (8 items/página) |
 | `/perfil` | ✅ | Edición de nombre, apellido, teléfono |
-| `/seguimiento` | ✅ | Conectado a pedidos reales del usuario |
+| `/seguimiento` | ✅ | Timeline visual con etapas del flujo real (Miami → BsAs) |
 
 ### Panel Admin
 
 | Ruta | Estado | Descripción |
 |---|---|---|
 | `/admin` | ✅ | Métricas del día/mes: pedidos, ingresos, vendedores, cotizaciones pendientes |
-| `/admin/pedidos` | ✅ | Tabla con dropdown de estado + tracking code editable por fila |
-| `/admin/cotizaciones` | ✅ | Tabla con acciones: Aprobar (setea flag + envía link) / Rechazar con motivo |
+| `/admin/pedidos` | ✅ | Tabla con filtros por estado + dropdown de estado + tracking code editable |
+| `/admin/cotizaciones` | ✅ | Aprobar (flag + email) / Rechazar. Badge 🌍 si origen Europa. Badge UTM source. |
 | `/admin/vendedores` | ✅ | Lista de vendedores con conteo de listings |
 
 ### APIs
 
 | Endpoint | Descripción |
 |---|---|
-| `POST /api/cotizar` | Calcula cotización, guarda en Supabase. Rate limit 10 req/min por IP (in-memory) |
+| `POST /api/cotizar` | Calcula cotización, guarda en Supabase con utm_source. Rate limit 10 req/min por IP. |
 | `GET /api/tipo-cambio` | Dólar blue desde dolarapi.com con fallback $1.200 |
-| `POST /api/mp/webhook` | Notificaciones MercadoPago → actualiza pedido a `comprado` |
+| `POST /api/mp/webhook` | Pago aprobado → `comprado`. Cancelado/reembolsado → `cancelado`. |
 | `GET /api/mp/webhook` | Health check para verificación de URL por MP |
+| `GET /api/cron/actualizar-precios` | Cron diario 08:00 ARG — actualiza `listings.precio_ars` desde `precio_usd` × dólar blue |
 
 ---
 
@@ -188,13 +230,13 @@ Si `origen === "europa"` y `precio > USD 100`: el sistema muestra un banner de a
 
 | Trigger | Destinatario | Contenido |
 |---|---|---|
-| Admin hace click en "Aprobar" | Usuario | Link para confirmar la cotización |
-| Admin rechaza cotización | Usuario | Notificación de rechazo con motivo |
-| Usuario confirma pedido | Usuario | Confirmación con ID de pedido |
-| Usuario confirma pedido | Admin | Alerta de nuevo pedido |
+| Admin aprueba cotización | Cliente | Link para confirmar y pagar |
+| Admin rechaza cotización | Cliente | Notificación de rechazo con motivo |
+| Cliente confirma pedido (MP) | Admin | Alerta de nuevo pedido + instrucciones de pago manual si aplica |
+| Cliente confirma pedido (transferencia/cripto) | Cliente | Instrucciones de pago (datos bancarios / wallet) |
 | MP confirma pago (webhook) | Admin | Alerta de pago recibido |
 
-> **Requisito:** `RESEND_API_KEY` + dominio verificado en Resend para producción. Sin dominio verificado, usar SMTP nativo de Supabase (límite: 3 emails/hora).
+> **Requisito:** `RESEND_API_KEY` + dominio verificado en Resend. Sin dominio verificado, usar SMTP nativo de Supabase (límite: 3 emails/hora).
 
 ---
 
@@ -204,10 +246,10 @@ Si `origen === "europa"` y `precio > USD 100`: el sistema muestra un banner de a
 
 | Tabla | Campos clave |
 |---|---|
-| `profiles` | `id`, `email`, `nombre`, `apellido`, `telefono`, `cuit`, `tipo` (`comprador`/`vendedor`/`admin`) |
-| `cotizaciones` | `id`, `user_id`, `nombre_producto`, `producto_url`, `precio_usd`, `peso_kg`, `categoria`, `costo_total_ars`, `desglose` (JSONB), `estado`, `aprobada_por_admin` (BOOLEAN) |
+| `profiles` | `id`, `email`, `nombre`, `apellido`, `telefono`, `tipo` (`comprador`/`vendedor`/`admin`) |
+| `cotizaciones` | `id`, `user_id`, `nombre_producto`, `producto_url`, `precio_usd`, `peso_kg`, `categoria`, `costo_total_ars`, `desglose` (JSONB), `estado`, `aprobada_por_admin`, `utm_source` |
 | `pedidos` | `id` (HI-XXXX), `cotizacion_id`, `user_id`, `producto_nombre`, `producto_url`, `precio_usd`, `costo_total_ars`, `estado`, `tracking_code`, `origen`, `updated_at` |
-| `listings` | `id`, `vendedor_id`, `nombre`, `descripcion`, `precio_ars`, `categoria`, `imagen_url`, `stock`, `activo` |
+| `listings` | `id`, `vendedor_id`, `nombre`, `descripcion`, `precio_usd`, `precio_ars`, `categoria`, `imagen_url`, `stock`, `activo` |
 
 ### Estructura del campo `desglose` (JSONB)
 
@@ -229,15 +271,13 @@ Si `origen === "europa"` y `precio > USD 100`: el sistema muestra un banner de a
 }
 ```
 
-### Estados de cotización
+### Migrations pendientes de correr en Supabase
 
-`pendiente` → `aprobada` | `rechazada` | `expirada`
-
-### Estados de pedido
-
-`en_proceso` → `comprado` → `en_transito` → `en_aduana` → `entregado` | `cancelado`
-
-> El webhook de MP cambia automáticamente `en_proceso` → `comprado` al confirmar el pago.
+| Archivo | Contenido |
+|---|---|
+| `supabase/migrations/001_add_aprobada_por_admin.sql` | `ALTER TABLE cotizaciones ADD COLUMN aprobada_por_admin BOOLEAN NOT NULL DEFAULT FALSE` |
+| `supabase/migrations/002_add_utm_source.sql` | `ALTER TABLE cotizaciones ADD COLUMN utm_source TEXT` |
+| `supabase/migrations/003_add_precio_usd_listings.sql` | `ALTER TABLE listings ADD COLUMN precio_usd NUMERIC(10,2)` |
 
 ### RLS — políticas implementadas
 
@@ -248,11 +288,11 @@ Si `origen === "europa"` y `precio > USD 100`: el sistema muestra un banner de a
 | `profiles` | INSERT | Solo via trigger `handle_new_user` (SECURITY DEFINER) |
 | `cotizaciones` | SELECT | Usuario ve las propias |
 | `cotizaciones` | INSERT | Usuario propio o anónimo (user_id = null) |
-| `cotizaciones` | UPDATE | Usuario actualiza las propias (necesario para confirmarPedido) |
-| `cotizaciones` | ALL | Admin gestiona todo |
+| `cotizaciones` | UPDATE | Usuario actualiza las propias (para `confirmarPedido`) |
+| `cotizaciones` | ALL | Admin gestiona todo vía service role |
 | `pedidos` | SELECT | Usuario ve los propios |
-| `pedidos` | INSERT | Usuario inserta los propios (necesario para confirmarPedido) |
-| `pedidos` | ALL | Admin gestiona todo |
+| `pedidos` | INSERT | Usuario inserta los propios (para `confirmarPedido`) |
+| `pedidos` | ALL | Admin gestiona todo vía service role |
 | `listings` | SELECT | Cualquiera ve listings activos |
 | `listings` | ALL | Vendedor gestiona los propios; admin gestiona todos |
 
@@ -266,10 +306,11 @@ Si `origen === "europa"` y `precio > USD 100`: el sistema muestra un banner de a
 | Admin | Layout verifica `profile.tipo === "admin"` server-side antes de renderizar |
 | Datos | RLS en todas las tablas — usuarios solo ven sus propios datos |
 | Ownership | `confirmarPedido` verifica `.eq("user_id", user.id)` — imposible confirmar cotización ajena |
-| Rate limiting | 10 req/min por IP en `/api/cotizar` (in-memory — no persiste en multi-instancia) |
+| Modo asistido | `aprobada_por_admin` verificado server-side — imposible confirmar sin aprobación admin |
+| Rate limiting | 10 req/min por IP en `/api/cotizar` (in-memory — reemplazar con Redis en fase 2) |
+| Cron | `CRON_SECRET` verificado en `/api/cron/actualizar-precios` |
 | Admin DB | `createAdminClient()` con service role key, solo en archivos server-only |
 | Pagos | Cero persistencia de tarjetas — delegación total a MercadoPago (PCI-DSS) |
-| Auth errors | Login maneja: credenciales incorrectas, email no confirmado, rate limit |
 
 ---
 
@@ -293,32 +334,18 @@ RESEND_API_KEY=re_...
 RESEND_FROM=Hornet Imports <noreply@tudominio.com>
 RESEND_ADMIN_EMAIL=admin@tudominio.com
 
-# MercadoPago — opcional; sin esto el flujo cae a efectivo
+# MercadoPago — opcional; sin esto el flujo cae a transferencia/cripto
 MP_ACCESS_TOKEN=APP_USR-...
 
-# URLs
+# Vercel Cron — cualquier string largo y random
+CRON_SECRET=un-string-largo-y-seguro
+
+# URLs y contacto
 NEXT_PUBLIC_SITE_URL=https://tudominio.com
 NEXT_PUBLIC_WHATSAPP_NUMBER=5491100000000   # sin + ni espacios
 ```
 
-**Cómo agregar en Vercel:** Dashboard → proyecto → Settings → Environment Variables → `Production` → Redeploy.
-
----
-
-## Gaps críticos del cotizador
-
-| Feature | Estado | Descripción |
-|---|---|---|
-| ~~Toggle Particular / Mayorista~~ | ✅ Hecho | Selector en primera pantalla. Fee 15% / 12%. Mínimos distintos. Badge B2B en resultado. |
-| ~~Simplificación de datos~~ | ✅ Hecho | Eliminados largo/ancho/alto. Solo `pesoKg`. |
-| ~~Lógica de origen Europa~~ | ✅ Hecho | Selector de origen + alerta amarilla + flag en `desglose` JSONB. |
-| ~~Modo asistido~~ | ✅ Hecho | Columna `aprobada_por_admin BOOLEAN DEFAULT FALSE` en `cotizaciones`. Gate en `/solicitar/[id]`: si false muestra "en revisión", si true habilita el botón. Admin aprueba con un click + envía email. |
-| **Validación CUIT + cupo Courier** | 🔴 Pendiente | Verificar que el usuario no supere los 12 envíos/año por CUIT (AFIP). Fase 1: autodeclaración en perfil. Fase 2: webservice AFIP A4/A5. |
-| **Intervención humana por origen Europa** | 🟡 Pendiente | Cuando `alertaOrigenEuropa === true`, el admin ve un indicador especial en `/admin/cotizaciones` y debe revisar la ruta antes de enviar el link. |
-| **Circuit breaker de margen** | 🟡 Pendiente | Si una categoría tiene margen real < 10% en los últimos 10 envíos, desactivarla automáticamente. Requiere registrar margen real post-envío. |
-| **Descuento escalonado por volumen mayorista** | 🟡 Pendiente | El fee fijo del 12% no considera el volumen acumulado. Requiere historial de pedidos por CUIT. |
-| **Panel Health Check del cotizador** | 🟢 Pendiente | Dashboard interno: margen predicho vs real por categoría. Señal temprana de calibración rota. |
-| **Cobertura cambiaria T+0** | 🟢 Pendiente | Conversión inmediata a USDT/USDC al confirmar el pago. El spread del fee cubre el riesgo cambiario pero no hay conversión real. |
+**Cómo agregar:** Vercel Dashboard → proyecto → Settings → Environment Variables → `Production` → Redeploy.
 
 ---
 
@@ -330,44 +357,43 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=5491100000000   # sin + ni espacios
 
 - ✅ Cotizador con cálculo real (whitelist + blacklist)
 - ✅ Toggle particular / mayorista con pricing diferenciado
-- ✅ Lógica de origen Europa con alerta
-- ✅ Pago online (MercadoPago) + pago en efectivo
-- ✅ Flujo completo cotización → pedido → pago
-- ✅ Emails automáticos (confirmación, rechazo, alerta admin)
-- ✅ Dashboard usuario + panel admin básico
+- ✅ Lógica de origen Europa con alerta + indicador admin
+- ✅ Modo asistido (admin aprueba antes de que el cliente pueda pagar)
+- ✅ Métodos de pago: MercadoPago + Transferencia + Cripto/USDT
+- ✅ Webhook MP: pago aprobado → comprado / cancelado → cancelado
+- ✅ Flujo completo cotización → pedido → pago → tracking
+- ✅ Emails automáticos (aprobación, rechazo, confirmación, alerta admin)
+- ✅ Dashboard usuario con tracking visual del flujo Miami → BsAs
+- ✅ Panel admin: filtros por estado, indicador Europa, badge UTM
 - ✅ Auth completa (registro, login, recuperación, errores específicos)
-- ✅ Modo asistido (gate `aprobada_por_admin` + estado "en revisión" para el usuario)
-- ❌ Validación CUIT + cupo Courier
+- ✅ UTM tracking: `utm_source` guardado automáticamente en cada cotización
+- ✅ Cron dólar blue: actualiza `listings.precio_ars` diariamente a las 08:00 ARG
 - **KPI clave:** > 60% de los pedidos migran de WhatsApp a la web
 
 ### Fase 2 — Escala B2B (mes 3–9)
 
-- ✅ Modo asistido — intervención por origen Europa pendiente
-- Validación CUIT + cupo courier (autodeclaración → AFIP)
-- Descuento escalonado por volumen acumulado
-- Panel mayorista con historial y saldo
-- WhatsApp Business API para mayoristas
-- Upstash Redis (rate limiting robusto)
-- Inngest (alertas automáticas de estado de tránsito)
-- AfterShip para tracking real de 900+ couriers
-- UTM tracking en cotizaciones
+- AfterShip: tracking real con número de guía del courier
+- Upstash Redis: rate limiting robusto multi-instancia
+- WhatsApp Business API: notificaciones de estado para mayoristas
+- Descuento escalonado por volumen acumulado mayorista
+- Panel mayorista con historial y proyecciones
 - Analytics (Plausible + Posthog)
+- Circuit breaker: desactivar categoría si margen real < 10%
 - **KPI clave:** ≥ 10 mayoristas activos con frecuencia mensual
 
 ### Fase 3 — Ecosistema Marketplace (mes 9–18)
 
 - Panel de vendedor externo (CRUD listings, gestión de ventas)
 - Split payment automático con MercadoPago
-- USDT gateway (Coinbase Commerce / BitPay)
+- Gateway USDT nativo (Coinbase Commerce / BitPay)
 - Anti-bypass: ocultar contacto del vendedor hasta transacción iniciada
-- ERP básico de stock para vendedores
 - Stripe para fees en USD a mayoristas internacionales
 - **KPI clave:** GMV marketplace > $10.000 USD/mes
 
 ### Fase 4 — Optimización logística (mes 18+)
 
 - Algoritmo de consolidación de lotes (bin-packing)
-- Smart routing dinámico entre rutas (Miami / Shanghai / São Paulo)
+- Smart routing dinámico Miami / Shanghai / São Paulo
 - Microservicio Python/FastAPI si la optimización lo requiere
 
 ---
@@ -378,31 +404,21 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=5491100000000   # sin + ni espacios
 
 | Item | Prioridad |
 |---|---|
-| Agregar env vars en Vercel (`SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `MP_ACCESS_TOKEN`, etc.) | 🔴 |
-| Correr SQL del trigger en Supabase (para que `nombre` se guarde al registrarse) | 🔴 |
-| Correr migration `001_add_aprobada_por_admin.sql` en Supabase SQL Editor | 🔴 |
+| Agregar env vars en Vercel (ver sección Variables de entorno) | 🔴 |
+| Correr el SQL del trigger `handle_new_user` en Supabase (para que `nombre` se guarde al registrarse) | 🔴 |
+| Correr migrations 001, 002 y 003 en Supabase SQL Editor | 🔴 |
 | Promover primer admin: `UPDATE profiles SET tipo='admin' WHERE email='...'` | 🔴 |
-| Configurar URL en Supabase: `Authentication → URL Configuration → Site URL` | 🔴 |
+| Configurar Site URL en Supabase: `Authentication → URL Configuration` | 🔴 |
 | Testear flujo completo con MP sandbox | 🟡 |
 
-### Dev — alta prioridad
+### Dev — requiere cuentas externas
 
-| Item | Complejidad |
+| Item | Requiere |
 |---|---|
-| ~~Modo asistido~~ | ✅ Hecho |
-| Validación CUIT + cupo Courier en perfil (autodeclaración) | Media |
-| Filtros por estado en `/admin/pedidos` | Baja |
-| UTM tracking (`?utm_source` guardado en cotizaciones) | Baja |
-
-### Dev — media prioridad
-
-| Item | Complejidad |
-|---|---|
-| Analytics — Plausible o Posthog | Baja |
-| Dólar Blue cron para `listings.precio_ars` | Media |
-| Rate limiting con Upstash Redis (reemplaza in-memory) | Media |
-| AfterShip tracking real | Alta |
-| MercadoPago: reembolsos y cancelaciones | Media |
+| Analytics — Plausible o Posthog | Cuenta en el servicio |
+| AfterShip tracking real | Cuenta AfterShip + API key |
+| Rate limiting Upstash Redis | Cuenta Upstash + keys |
+| WhatsApp Business API | Cuenta Twilio o Meta Business |
 
 ### Dev — fase 2/3
 
@@ -410,52 +426,100 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=5491100000000   # sin + ni espacios
 |---|---|
 | Panel vendedor (CRUD listings) | Alta |
 | Anti-bypass marketplace | Alta |
-| USDT gateway | Alta |
+| Gateway USDT nativo | Alta |
 | Descuento escalonado por volumen mayorista | Media |
+| Circuit breaker de margen por categoría | Media |
 
 ---
 
-## Integraciones planeadas
+## Riesgos principales
 
-| Integración | Fase | Descripción |
-|---|---|---|
-| **Upstash Redis** | 2 | Rate limiting robusto multi-instancia + caché de cotizaciones frecuentes |
-| **Inngest** | 2 | Orquestador de flujos largos — alerta si el flete no cambia de estado en 7 días |
-| **AfterShip API** | 2 | Tracking unificado de 900+ couriers |
-| **WhatsApp Business API** | 2 | Notificaciones de estado para mayoristas vía Twilio/Meta |
-| **AFIP Webservice A4/A5** | 2 | Validación automática de CUIT + condición fiscal |
-| **Binance / Bitso / Lemon** | 2 | Conversión T+0 a USDT/USDC para cobertura cambiaria real |
-| **Plausible / Posthog** | 2 | Analytics de tráfico y embudo de conversión |
-| **Amazon / eBay / AliExpress APIs** | 2 | Extracción automática de título y precio desde el link del producto |
-| **USDT gateway (Coinbase Commerce)** | 3 | Aceptar pagos en cripto directamente |
-| **Stripe** | 3 | Cobro de fees en USD a mayoristas internacionales |
+### 🔴 Riesgo #1 — Quema de margen por calibración incorrecta del cotizador
+
+Un solo envío con arancel mal aplicado puede comerse el margen de 20 envíos rentables.
+
+**Mitigaciones:**
+- Whitelist conservadora (expandir solo con datos reales de envíos realizados)
+- ✅ Modo asistido implementado — admin revisa cada cotización antes de aprobarla
+- Circuit breaker por categoría si margen real < 10% en últimos 10 envíos — **fase 2**
+
+### 🔴 Riesgo #2 — Cuello de botella manual al escalar
+
+Si el volumen crece, la revisión manual de cada cotización puede convertirse en un cuello de botella.
+
+**Mitigaciones:**
+- Tasa de fallback como KPI semanal (target < 25% de cotizaciones manuales)
+- Expandir whitelist en sprints con datos reales de envíos exitosos
+- Operador junior de cotizaciones manuales (~$600 USD/mes) cuando sea necesario
+
+### 🟡 Riesgo #3 — Riesgo cambiario durante el tránsito (15–25 días)
+
+Una devaluación durante el tránsito puede liquidar el margen.
+
+**Mitigaciones:**
+- Spread cambiario incluido en el fee (15% particular / 12% mayorista)
+- Conversión T+0 a USDT/USDC al confirmar el pago — **fase 2**
+
+### 🟡 Riesgo #4 — Compliance aduanero
+
+Cambios de régimen Courier, cepos, o retenciones en aduana.
+
+**Mitigaciones:**
+- El compliance corre por cuenta de Hornet (el cliente no importa a su nombre)
+- Modo asistido permite que el admin verifique cada operación antes de aprobarla
+- Indicador 🌍 en admin cuando hay riesgo de arancel adicional por escala en EE.UU.
 
 ---
 
-## Compliance y estructura legal
+## Arquitectura general
 
-### Límites del régimen Courier (AFIP)
-
-- Máximo **USD 3.000** por envío
-- **12 envíos/año por CUIT** ← el sistema debe validarlo (PENDIENTE)
-- Máximo **50 kg** por envío
-- Presunción comercial si hay múltiples unidades idénticas
-
-### Organismos reguladores relevantes
-
-| Organismo | Categorías que controla |
-|---|---|
-| SENASA | Alimentos, bebidas, productos de origen animal/vegetal |
-| ANMAT | Cosméticos, medicamentos, suplementos |
-| ENACOM / Res. 92 SeCom | Electrónica, dispositivos eléctricos |
-| Res. 404 COPANT | Textiles |
-| Res. INTI | Juguetes para niños < 36 meses |
-
-### Estructura legal target
-
-- **LLC en Delaware/Uruguay/Paraguay** — procesar fees B2B y operatoria USDT/USDC offshore
-- **SRL/SAS en Argentina** — operación local, facturación en pesos
-- Responsabilidad solidaria marketplace (RG 4622 AFIP) → verificar CUIT + condición fiscal de vendedores al alta y cada 6 meses
+```
+D:\Anti-ML\HornetImports\
+├── docs/
+│   └── ESTADO-PROYECTO.md
+├── supabase/
+│   ├── schema.sql                       ← DROP + recreate completo
+│   └── migrations/
+│       ├── 001_add_aprobada_por_admin.sql
+│       ├── 002_add_utm_source.sql
+│       └── 003_add_precio_usd_listings.sql
+├── vercel.json                          ← Cron: /api/cron/actualizar-precios
+└── src/
+    ├── app/
+    │   ├── (public)/
+    │   │   ├── cotizar/                 # CotizadorForm (toggle particular/mayorista)
+    │   │   ├── solicitar/[cotizacionId] # Gate modo asistido + MP/Transferencia/Cripto
+    │   │   ├── seguimiento/             # Timeline visual Miami → BsAs
+    │   │   ├── pago/                    # exitoso · pendiente · fallido
+    │   │   └── marketplace/             # Listado + detalle de productos
+    │   ├── (auth)/                      # Login, registro, recuperar, actualizar contraseña
+    │   ├── (dashboard)/
+    │   │   ├── dashboard/               # Stats + últimos pedidos
+    │   │   ├── pedidos/                 # Lista con labels del flujo real
+    │   │   └── perfil/                  # Nombre, apellido, teléfono
+    │   ├── (admin)/
+    │   │   ├── admin/                   # Métricas generales
+    │   │   ├── admin/pedidos/           # Filtros por estado + edición de tracking
+    │   │   ├── admin/cotizaciones/      # Aprobar/Rechazar + badge Europa + UTM
+    │   │   └── admin/vendedores/        # Lista de vendedores
+    │   └── api/
+    │       ├── cotizar/                 # POST — calcula + guarda + utm_source
+    │       ├── tipo-cambio/             # GET — dólar blue
+    │       ├── mp/webhook/              # POST — aprobado/cancelado/reembolsado
+    │       └── cron/actualizar-precios/ # GET — cron diario listings.precio_ars
+    ├── components/
+    │   ├── cotizador/                   # CotizadorForm, ResultadoCotizacion
+    │   ├── layout/                      # Header, Footer, MobileNav
+    │   ├── seguimiento/                 # TrackingForm (timeline con etapas reales)
+    │   └── ui/                          # LogoutButton, etc.
+    ├── lib/
+    │   ├── cotizador/                   # calcular.ts, categorias.ts, types.ts
+    │   ├── email/                       # client.ts (Resend), send.ts (templates)
+    │   ├── mp/                          # client.ts (preference + payment)
+    │   ├── supabase/                    # server.ts, client.ts, admin.ts, types.ts
+    │   └── utils/                       # format.ts
+    └── proxy.ts                         # Auth guard centralizado
+```
 
 ---
 
@@ -466,113 +530,7 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=5491100000000   # sin + ni espacios
 | Conversión visita → cotización | ≥ 8% | < 5% |
 | Conversión cotización → compra (particular) | ≥ 30% | < 15% |
 | Conversión cotización → compra (mayorista) | ≥ 50% | < 30% |
-| Margen post-envío promedio | ≥ 14% | < 10% (circuit breaker) |
-| Tasa de fallback a manual | < 25% | > 35% (sprint de whitelist) |
+| Margen post-envío promedio | ≥ 14% | < 10% (revisar pricing) |
+| Tasa de revisión manual (cotizaciones blacklist / Europa) | < 25% | > 35% |
 | LTV/CAC particular | ≥ 3× | < 2× |
 | LTV/CAC mayorista | ≥ 5× | < 3× |
-| Account expansion rate mayoristas | Crecimiento MoM | Caída 2 meses seguidos |
-
----
-
-## Riesgos principales
-
-### 🔴 Riesgo #1 — Quema de margen por calibración incorrecta del cotizador
-
-Un solo envío con arancel 35% y peso mal declarado puede comerse el margen de 20 envíos rentables.
-
-**Mitigaciones:**
-- Whitelist conservadora (expandir solo con datos reales de envíos realizados)
-- ✅ Modo asistido los primeros 60 días — implementado
-- Circuit breaker por categoría si margen real < 10% en últimos 10 envíos — **PENDIENTE**
-
-### 🔴 Riesgo #2 — Asfixia regulatoria (AFIP / Aduana)
-
-Cambios de régimen Courier, cepos, congelamiento de fondos, responsabilidad solidaria marketplace.
-
-**Mitigaciones:**
-- Estructura legal multi-jurisdicción (LLC offshore + SRL local)
-- Validación CUIT + cupo Courier antes de cotizar — **PENDIENTE**
-- Logs forenses de cada cambio de estado de pedido
-
-### 🟡 Riesgo #3 — Cuello de botella manual al escalar
-
-Si fallback a manual > 35%, el founder se convierte en el cuello de botella.
-
-**Mitigaciones:**
-- Tasa de fallback como KPI semanal (target < 25%)
-- Expandir whitelist en sprints con datos reales
-- Operador junior de cotizaciones manuales (~$600 USD/mes) cuando sea necesario
-
-### 🟡 Riesgo #4 — Riesgo cambiario durante el tránsito (15–30 días)
-
-Una devaluación durante el tránsito puede liquidar el margen si no hay cobertura.
-
-**Mitigaciones:**
-- Spread cambiario incluido en el fee (15% particular / 12% mayorista)
-- Conversión T+0 a USDT/USDC al confirmar el pago — **PENDIENTE**
-
----
-
-## Arquitectura general
-
-```
-D:\Anti-ML\HornetImports\
-├── docs/
-│   └── ESTADO-PROYECTO.md        ← este archivo
-├── supabase/
-│   └── schema.sql                ← DROP + recreate completo (correr en Supabase SQL Editor)
-└── src/
-    ├── app/
-    │   ├── (public)/             # Rutas sin auth requerida
-    │   │   ├── cotizar/          # CotizadorForm con toggle particular/mayorista
-    │   │   ├── solicitar/        # Confirmación + selector MP/Efectivo
-    │   │   ├── seguimiento/      # Tracking form
-    │   │   ├── pago/             # exitoso · pendiente · fallido
-    │   │   └── marketplace/      # Listado + detalle de productos
-    │   ├── (auth)/               # Login, registro, recuperar/actualizar contraseña
-    │   ├── (dashboard)/          # Panel usuario (proxy.ts requerido)
-    │   │   ├── dashboard/        # Stats + últimos pedidos + banner perfil
-    │   │   ├── pedidos/          # Lista completa con paginación
-    │   │   └── perfil/           # Edición de datos personales
-    │   ├── (admin)/              # Panel admin (proxy.ts + tipo="admin")
-    │   │   ├── admin/            # Métricas generales
-    │   │   ├── admin/pedidos/    # Gestión de pedidos con estado y tracking
-    │   │   ├── admin/cotizaciones/ # Enviar link / rechazar
-    │   │   └── admin/vendedores/ # Lista de vendedores
-    │   └── api/
-    │       ├── cotizar/          # POST — calcula + guarda cotización
-    │       ├── tipo-cambio/      # GET — dólar blue
-    │       └── mp/webhook/       # POST — confirma pago MP
-    ├── components/
-    │   ├── cotizador/            # CotizadorForm, ResultadoCotizacion
-    │   ├── layout/               # Header, Footer, MobileNav
-    │   ├── seguimiento/          # TrackingForm
-    │   └── ui/                   # LogoutButton, etc.
-    ├── lib/
-    │   ├── cotizador/            # calcular.ts, categorias.ts, types.ts
-    │   ├── email/                # client.ts (Resend), send.ts (5 templates)
-    │   ├── mp/                   # client.ts (preference + webhook)
-    │   ├── supabase/             # server.ts, client.ts, admin.ts, types.ts
-    │   └── utils/                # format.ts
-    └── proxy.ts                  # Auth guard centralizado
-```
-
----
-
-## Feedback de cliente incorporado — mayo 2026
-
-| Pedido | Estado |
-|---|---|
-| MercadoPago | ✅ Implementado |
-| Dólar Blue automático en cotizaciones | ✅ Real-time en cada cotización |
-| Dólar Blue en listings (catálogo propio) | ❌ `listings.precio_ars` es estático — necesita cron si hay catálogo activo |
-| Pago en efectivo | ✅ Selector en `/solicitar` |
-| Toggle particular / mayorista | ✅ Fee diferenciado, mínimos distintos, badge B2B |
-| Simplificar cotizador (sin medidas) | ✅ Solo peso + origen |
-| Lógica de origen Europa | ✅ Alerta + flag en desglose |
-| Sección Mayorista completa | ⚠️ Landing estático ok — falta formulario de alta y pricing escalonado interactivo |
-| USDT | ❌ Fase 3 |
-| UTM / trazabilidad de leads | ❌ Pendiente |
-| Analytics / control de clics | ❌ Pendiente (Plausible + Posthog) |
-| Anti-bypass marketplace | ❌ Pendiente |
-| Tres pilares (cotizador + mkt empresa + mkt usuarios) | ⚠️ Schema listo, cotizador ✅, panel vendedor ❌ |
