@@ -242,6 +242,7 @@ Si `origen === "europa"` y `precio > USD 100`: muestra banner de alerta amarilla
 | `/admin` | ✅ | Métricas del día/mes: pedidos, ingresos, vendedores, cotizaciones pendientes |
 | `/admin/pedidos` | ✅ | Tabla con filtros por estado + dropdown de estado + tracking code editable |
 | `/admin/cotizaciones` | ✅ | Aprobar (flag + email) / Rechazar. Badge 🌍 si origen Europa. Badge UTM source. Badge "📦 Fwd" si forwarding. |
+| `/admin/pedidos` | ✅ (actualizado) | Badge "📦 Fwd" + tracking del cliente visible bajo el nombre del producto para pedidos forwarding. |
 | `/admin/vendedores` | ✅ | Lista de vendedores con conteo de listings |
 
 ### APIs
@@ -278,7 +279,7 @@ Si `origen === "europa"` y `precio > USD 100`: muestra banner de alerta amarilla
 |---|---|
 | `profiles` | `id`, `email`, `nombre`, `apellido`, `telefono`, `tipo` (`comprador`/`vendedor`/`admin`) |
 | `cotizaciones` | `id`, `user_id`, `nombre_producto`, `producto_url`, `precio_usd`, `peso_kg`, `categoria`, `costo_total_ars`, `desglose` (JSONB), `estado`, `aprobada_por_admin`, `utm_source`, `tipo_servicio` |
-| `pedidos` | `id` (HI-XXXX), `cotizacion_id`, `user_id`, `producto_nombre`, `producto_url`, `precio_usd`, `costo_total_ars`, `estado`, `tracking_code`, `origen`, `updated_at` |
+| `pedidos` | `id` (HI-XXXX), `cotizacion_id`, `user_id`, `producto_nombre`, `producto_url`, `precio_usd`, `costo_total_ars`, `estado`, `tipo_servicio`, `tracking_code`, `tracking_codigo_cliente`, `origen`, `updated_at` |
 | `listings` | `id`, `vendedor_id`, `nombre`, `descripcion`, `precio_usd`, `precio_ars`, `categoria`, `imagen_url`, `stock`, `activo` |
 
 ### Estructura del campo `desglose` (JSONB)
@@ -333,6 +334,7 @@ Si `origen === "europa"` y `precio > USD 100`: muestra banner de alerta amarilla
 | `supabase/migrations/002_add_utm_source.sql` | `ALTER TABLE cotizaciones ADD COLUMN utm_source TEXT` |
 | `supabase/migrations/003_add_precio_usd_listings.sql` | `ALTER TABLE listings ADD COLUMN precio_usd NUMERIC(10,2)` |
 | `supabase/migrations/004_add_tipo_servicio.sql` | `ALTER TABLE cotizaciones ADD COLUMN tipo_servicio TEXT NOT NULL DEFAULT 'completo'` |
+| `supabase/migrations/005_add_tracking_cliente.sql` | `ALTER TABLE pedidos ADD COLUMN tipo_servicio TEXT NOT NULL DEFAULT 'completo', ADD COLUMN tracking_codigo_cliente TEXT` |
 
 ### RLS — políticas implementadas
 
@@ -416,6 +418,7 @@ NEXT_PUBLIC_MIAMI_ADDRESS=3250 NW 107th Ave Suite 600, Doral FL 33172
 - ✅ Cotizador con cálculo real (whitelist + blacklist)
 - ✅ Modo servicio: **Completo** (Hornet compra + envía) y **Forwarding** (solo envío Miami → BsAs)
 - ✅ Toggle particular / mayorista con pricing diferenciado (4 combinaciones de fee)
+- ✅ Tracking del cliente: en forwarding, el cliente ingresa el tracking de su envío a Miami desde `/pedidos`
 - ✅ Lógica de origen Europa con alerta + indicador admin
 - ✅ Modo asistido (admin aprueba antes de que el cliente pueda pagar)
 - ✅ Métodos de pago: MercadoPago + Transferencia + Cripto/USDT
@@ -465,7 +468,7 @@ NEXT_PUBLIC_MIAMI_ADDRESS=3250 NW 107th Ave Suite 600, Doral FL 33172
 |---|---|
 | Agregar env vars en Vercel (ver sección Variables de entorno) | 🔴 |
 | Correr el SQL del trigger `handle_new_user` en Supabase (para que `nombre` se guarde al registrarse) | 🔴 |
-| Correr migrations 001, 002, 003 y 004 en Supabase SQL Editor | 🔴 |
+| Correr migrations 001–005 en Supabase SQL Editor | 🔴 |
 | Agregar `NEXT_PUBLIC_MIAMI_ADDRESS` en Vercel con la dirección real del depósito | 🔴 |
 | Promover primer admin: `UPDATE profiles SET tipo='admin' WHERE email='...'` | 🔴 |
 | Configurar Site URL en Supabase: `Authentication → URL Configuration` | 🔴 |
