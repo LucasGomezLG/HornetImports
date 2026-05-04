@@ -1,0 +1,117 @@
+.header {
+  background: var(--color-primary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+/* ── Logo ─────────────────────────────────────────────── */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.logo img {
+  border-radius: 50%;
+}
+
+.logoText {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* ── Nav ──────────────────────────────────────────────── */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 1;
+}
+
+.navLink {
+  padding: var(--space-2) var(--space-3);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.navLink:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Right side ───────────────────────────────────────── */
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.btnLogin {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+
+.btnLogin:hover {
+  color: #ffffff;
+}
+
+.btnCta {
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btnCta:hover {
+  background: var(--color-accent-hover);
+}
+
+/* ── Mobile ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .nav {
+    display: none;
+  }
+
+  .inner {
+    padding: 0 var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .logoText {
+    display: none;
+  }
+
+  .btnLogin {
+    display: none;
+  }
+}
