@@ -34,11 +34,15 @@ Entrega al cliente (coordinada por Hornet)
 
 ### Segmentos y pricing
 
-| Tipo | Fee logístico | Comisión marketplace |
-|---|---|---|
-| Particular (B2C) | 15% sobre CIF | — |
-| Mayorista (B2B) | 12% sobre CIF (mín. USD 200/envío) | — |
-| Vendedor del marketplace | — | 8–12% según categoría |
+| Tipo | Servicio | Fee logístico | Comisión marketplace |
+|---|---|---|---|
+| Particular (B2C) | Completo (Hornet compra + envía) | 15% sobre CIF | — |
+| Mayorista (B2B) | Completo | 12% sobre CIF (mín. USD 200/envío) | — |
+| Particular (B2C) | Forwarding (solo envío Miami → BsAs) | 8% sobre CIF | — |
+| Mayorista (B2B) | Forwarding | 6% sobre CIF | — |
+| Vendedor del marketplace | — | — | 8–12% según categoría |
+
+> **Forwarding**: el cliente ya compró el producto y lo envía a nuestra dirección en Miami. Hornet cobra solo el flete + aduana + fee. El total cotizado **excluye** el precio del producto.
 
 ### Descuento por volumen mayorista (target — no implementado aún)
 
@@ -73,12 +77,20 @@ Mix mínimo mensual para cubrir burn-rate (~$1.200 USD/mes):
 
 ## Cotizador — lógica implementada
 
+### Modos de servicio
+
+| Modo | Cuándo usarlo |
+|---|---|
+| **Completo** | Hornet compra el producto, lo envía a Miami y lo trae a BsAs |
+| **Forwarding** | El cliente ya compró el producto y lo envía a Miami; Hornet hace Miami → BsAs |
+
 ### Fórmula de cálculo
 
+**Modo completo:**
 ```
 CIF = precio_origen + flete
 flete = peso_facturable × USD 18/kg
-peso_facturable = redondear_al_medio(pesoKg)   ← solo peso real, sin volumétrico
+peso_facturable = redondear_al_medio(pesoKg)
 
 arancel      = CIF × tasa_categoria (0% – 35%)
 IVA          = (CIF + arancel) × 21%
@@ -88,23 +100,41 @@ total_usd    = CIF + arancel + IVA + tasa_est + fee_servicio
 total_ars    = total_usd × tipo_cambio_blue
 ```
 
+**Modo forwarding:**
+```
+CIF = valor_declarado + flete    ← mismo CIF para arancel/IVA/tasa
+arancel      = CIF × tasa_categoria
+IVA          = (CIF + arancel) × 21%
+tasa_est     = CIF × 3%
+fee_servicio = CIF × fee_ratio   ← 8% particular / 6% mayorista
+total_usd    = flete + arancel + IVA + tasa_est + fee_servicio  ← sin precio del producto
+total_ars    = total_usd × tipo_cambio_blue
+```
+
+> En forwarding el arancel e IVA se calculan sobre el CIF completo (valor declarado + flete), igual que en modo completo. Solo el **total cobrado al cliente** excluye el precio del producto porque ya lo pagó.
+
 ### Parámetros clave
 
 | Parámetro | Valor |
 |---|---|
 | Tarifa flete | USD 18/kg facturable |
-| Fee particular | 15% sobre CIF |
-| Fee mayorista | 12% sobre CIF |
+| Fee particular — completo | 15% sobre CIF |
+| Fee mayorista — completo | 12% sobre CIF |
+| Fee particular — forwarding | 8% sobre CIF |
+| Fee mayorista — forwarding | 6% sobre CIF |
 | Precio mínimo particular | USD 25 |
 | Precio mínimo mayorista | USD 200 |
+| Precio mínimo forwarding | USD 10 (valor declarado) |
 | Peso máximo | 30 kg |
 | Tipo de cambio | Dólar blue vía dolarapi.com · fallback: $1.200 |
+| Dirección Miami | `NEXT_PUBLIC_MIAMI_ADDRESS` (env var) |
 
 ### Campos del cotizador
 
+- Toggle de servicio: **Completo** / **Forwarding (solo envío)**
 - Nombre del producto
-- URL del producto
-- Precio en USD
+- URL del producto *(solo modo completo)*
+- Precio en USD (valor del producto / valor declarado para aduana)
 - Peso en kg
 - País de origen: Asia/China · EE.UU. · Europa · Otro
 - Categoría
@@ -145,7 +175,7 @@ Si `origen === "europa"` y `precio > USD 100`: muestra banner de alerta amarilla
 | Ruta | Estado | Descripción |
 |---|---|---|
 | `/` | ✅ | Landing con hero, stats, CTA |
-| `/cotizar` | ✅ | Cotizador completo: toggle particular/mayorista, origen, whitelist/blacklist |
+| `/cotizar` | ✅ | Toggle completo/forwarding + toggle particular/mayorista, origen, whitelist/blacklist, dirección Miami |
 | `/marketplace` | ✅ | Listado de productos con filtros |
 | `/marketplace/[slug]` | ✅ | Detalle de producto |
 | `/tienda/[slug]` | ✅ | Tienda de vendedor |
@@ -170,8 +200,8 @@ Si `origen === "europa"` y `precio > USD 100`: muestra banner de alerta amarilla
 
 | Paso | Quién | Estado | Descripción |
 |---|---|---|---|
-| Cotizar | Cliente | ✅ | `POST /api/cotizar` — calcula, guarda en Supabase, retorna cotizacionId |
-| Ver resultado | Cliente | ✅ | Desglose completo en ARS y USD. Badge B2B si mayorista. Alerta si origen Europa. |
+| Cotizar | Cliente | ✅ | `POST /api/cotizar` — calcula modo completo o forwarding, guarda en Supabase, retorna cotizacionId |
+| Ver resultado | Cliente | ✅ | Desglose completo en ARS y USD. Badge B2B si mayorista. Badge Fwd si forwarding. Alerta si origen Europa. Dirección Miami si forwarding. |
 | Esperar aprobación | Hornet | ✅ | `/solicitar/[id]` muestra "en revisión" hasta que admin apruebe |
 | Aprobar cotización | Admin | ✅ | Admin hace click en "Aprobar" → setea `aprobada_por_admin=true` + envía email al cliente |
 | Elegir método de pago | Cliente | ✅ | MercadoPago · Transferencia bancaria · Cripto / USDT |
@@ -211,7 +241,7 @@ Si `origen === "europa"` y `precio > USD 100`: muestra banner de alerta amarilla
 |---|---|---|
 | `/admin` | ✅ | Métricas del día/mes: pedidos, ingresos, vendedores, cotizaciones pendientes |
 | `/admin/pedidos` | ✅ | Tabla con filtros por estado + dropdown de estado + tracking code editable |
-| `/admin/cotizaciones` | ✅ | Aprobar (flag + email) / Rechazar. Badge 🌍 si origen Europa. Badge UTM source. |
+| `/admin/cotizaciones` | ✅ | Aprobar (flag + email) / Rechazar. Badge 🌍 si origen Europa. Badge UTM source. Badge "📦 Fwd" si forwarding. |
 | `/admin/vendedores` | ✅ | Lista de vendedores con conteo de listings |
 
 ### APIs
@@ -247,12 +277,13 @@ Si `origen === "europa"` y `precio > USD 100`: muestra banner de alerta amarilla
 | Tabla | Campos clave |
 |---|---|
 | `profiles` | `id`, `email`, `nombre`, `apellido`, `telefono`, `tipo` (`comprador`/`vendedor`/`admin`) |
-| `cotizaciones` | `id`, `user_id`, `nombre_producto`, `producto_url`, `precio_usd`, `peso_kg`, `categoria`, `costo_total_ars`, `desglose` (JSONB), `estado`, `aprobada_por_admin`, `utm_source` |
+| `cotizaciones` | `id`, `user_id`, `nombre_producto`, `producto_url`, `precio_usd`, `peso_kg`, `categoria`, `costo_total_ars`, `desglose` (JSONB), `estado`, `aprobada_por_admin`, `utm_source`, `tipo_servicio` |
 | `pedidos` | `id` (HI-XXXX), `cotizacion_id`, `user_id`, `producto_nombre`, `producto_url`, `precio_usd`, `costo_total_ars`, `estado`, `tracking_code`, `origen`, `updated_at` |
 | `listings` | `id`, `vendedor_id`, `nombre`, `descripcion`, `precio_usd`, `precio_ars`, `categoria`, `imagen_url`, `stock`, `activo` |
 
 ### Estructura del campo `desglose` (JSONB)
 
+**Modo completo (ejemplo):**
 ```json
 {
   "precioProducto": 150,
@@ -267,6 +298,29 @@ Si `origen === "europa"` y `precio > USD 100`: muestra banner de alerta amarilla
   "tipoCambio": 1250,
   "totalArs": 403312.5,
   "tipoImportacion": "particular",
+  "tipoServicio": "completo",
+  "incluyeProducto": true,
+  "alertaOrigenEuropa": false
+}
+```
+
+**Modo forwarding (ejemplo) — total excluye precio del producto:**
+```json
+{
+  "precioProducto": 150,
+  "pesoFacturable": 1.5,
+  "costoFlete": 27,
+  "arancelImportacion": 63.45,
+  "ivaImportacion": 50.34,
+  "tasaEstadistica": 5.31,
+  "feeServicio": 14.16,
+  "feeRatio": 0.08,
+  "total": 160.26,
+  "tipoCambio": 1250,
+  "totalArs": 200325,
+  "tipoImportacion": "particular",
+  "tipoServicio": "forwarding",
+  "incluyeProducto": false,
   "alertaOrigenEuropa": false
 }
 ```
@@ -278,6 +332,7 @@ Si `origen === "europa"` y `precio > USD 100`: muestra banner de alerta amarilla
 | `supabase/migrations/001_add_aprobada_por_admin.sql` | `ALTER TABLE cotizaciones ADD COLUMN aprobada_por_admin BOOLEAN NOT NULL DEFAULT FALSE` |
 | `supabase/migrations/002_add_utm_source.sql` | `ALTER TABLE cotizaciones ADD COLUMN utm_source TEXT` |
 | `supabase/migrations/003_add_precio_usd_listings.sql` | `ALTER TABLE listings ADD COLUMN precio_usd NUMERIC(10,2)` |
+| `supabase/migrations/004_add_tipo_servicio.sql` | `ALTER TABLE cotizaciones ADD COLUMN tipo_servicio TEXT NOT NULL DEFAULT 'completo'` |
 
 ### RLS — políticas implementadas
 
@@ -343,6 +398,9 @@ CRON_SECRET=un-string-largo-y-seguro
 # URLs y contacto
 NEXT_PUBLIC_SITE_URL=https://tudominio.com
 NEXT_PUBLIC_WHATSAPP_NUMBER=5491100000000   # sin + ni espacios
+
+# Dirección Miami para forwarding (se muestra al cliente en cotizador y resultado)
+NEXT_PUBLIC_MIAMI_ADDRESS=3250 NW 107th Ave Suite 600, Doral FL 33172
 ```
 
 **Cómo agregar:** Vercel Dashboard → proyecto → Settings → Environment Variables → `Production` → Redeploy.
@@ -356,7 +414,8 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=5491100000000   # sin + ni espacios
 **Objetivo:** convertir "pedime precio por WhatsApp" en autoservicio digital.
 
 - ✅ Cotizador con cálculo real (whitelist + blacklist)
-- ✅ Toggle particular / mayorista con pricing diferenciado
+- ✅ Modo servicio: **Completo** (Hornet compra + envía) y **Forwarding** (solo envío Miami → BsAs)
+- ✅ Toggle particular / mayorista con pricing diferenciado (4 combinaciones de fee)
 - ✅ Lógica de origen Europa con alerta + indicador admin
 - ✅ Modo asistido (admin aprueba antes de que el cliente pueda pagar)
 - ✅ Métodos de pago: MercadoPago + Transferencia + Cripto/USDT
@@ -406,7 +465,8 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=5491100000000   # sin + ni espacios
 |---|---|
 | Agregar env vars en Vercel (ver sección Variables de entorno) | 🔴 |
 | Correr el SQL del trigger `handle_new_user` en Supabase (para que `nombre` se guarde al registrarse) | 🔴 |
-| Correr migrations 001, 002 y 003 en Supabase SQL Editor | 🔴 |
+| Correr migrations 001, 002, 003 y 004 en Supabase SQL Editor | 🔴 |
+| Agregar `NEXT_PUBLIC_MIAMI_ADDRESS` en Vercel con la dirección real del depósito | 🔴 |
 | Promover primer admin: `UPDATE profiles SET tipo='admin' WHERE email='...'` | 🔴 |
 | Configurar Site URL en Supabase: `Authentication → URL Configuration` | 🔴 |
 | Testear flujo completo con MP sandbox | 🟡 |
@@ -508,7 +568,7 @@ D:\Anti-ML\HornetImports\
     │       ├── mp/webhook/              # POST — aprobado/cancelado/reembolsado
     │       └── cron/actualizar-precios/ # GET — cron diario listings.precio_ars
     ├── components/
-    │   ├── cotizador/                   # CotizadorForm, ResultadoCotizacion
+    │   ├── cotizador/                   # CotizadorForm (toggle completo/forwarding + banner Miami), ResultadoCotizacion
     │   ├── layout/                      # Header, Footer, MobileNav
     │   ├── seguimiento/                 # TrackingForm (timeline con etapas reales)
     │   └── ui/                          # LogoutButton, etc.
