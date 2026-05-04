@@ -126,6 +126,48 @@
 
 .disclaimer svg { flex-shrink: 0; margin-top: 1px; }
 
+/* ── Método de pago ───────────────────────────────────── */
+.metodoPagoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.metodoBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-3) var(--space-2);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: center;
+}
+
+.metodoBtn:hover { border-color: var(--color-primary); }
+
+.metodoBtnActive {
+  border-color: var(--color-accent);
+  background: #fff9f0;
+}
+
+.metodoIcon { font-size: 1.4rem; }
+
+.metodoLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.metodoDesc {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
 /* ── CTA ──────────────────────────────────────────────── */
 .ctaArea {
   display: flex;

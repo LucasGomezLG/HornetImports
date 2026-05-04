@@ -1,12 +1,12 @@
+export type OrigenProducto = "asia" | "europa" | "eeuu" | "otro";
+
 export interface InputCotizacion {
   nombreProducto: string;
   urlProducto: string;
   precioUsdProducto: number;
   pesoKg: number;
-  largo: number; // cm
-  ancho: number; // cm
-  alto: number;  // cm
   categoriaId: string;
+  origen: OrigenProducto;
 }
 
 export interface CotizacionDesglose {
@@ -17,18 +17,18 @@ export interface CotizacionDesglose {
   ivaImportacion: number;
   tasaEstadistica: number;
   feeServicio: number;
-  total: number;       // USD
-  tipoCambio: number;  // ARS por USD
-  totalArs: number;    // ARS
+  total: number;
+  tipoCambio: number;
+  totalArs: number;
+  alertaOrigenEuropa: boolean;
 }
 
 export type RazonRechazo =
   | "categoria_blacklist"
   | "precio_invalido"
-  | "dimensiones_invalidas"
   | "precio_minimo"
-  | "volumen_excedido";
+  | "peso_excedido";
 
 export type CotizacionResult =
-  | { ok: true; desglose: CotizacionDesglose; cotizacionId: string }
+  | { ok: true; desglose: CotizacionDesglose; cotizacionId: string | null }
   | { ok: false; razon: RazonRechazo };

@@ -5,7 +5,8 @@ import { crearPreferencia } from "@/lib/mp/client";
 import { sendPedidoConfirmado, sendAlertaNuevoPedido } from "@/lib/email/send";
 
 export async function confirmarPedido(
-  cotizacionId: string
+  cotizacionId: string,
+  metodoPago: "mp" | "efectivo" = "mp"
 ): Promise<{ error: string } | { mpUrl: string } | { redirect: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -43,8 +44,10 @@ export async function confirmarPedido(
     .update({ estado: "aprobada" })
     .eq("id", cotizacionId);
 
-  // Intentar crear preferencia de MercadoPago
-  if (process.env.MP_ACCESS_TOKEN) {
+  const email = user.email ?? "";
+
+  // Pago online con MercadoPago
+  if (metodoPago === "mp" && process.env.MP_ACCESS_TOKEN) {
     try {
       const preferencia = await crearPreferencia(
         pedido.id,
@@ -55,12 +58,11 @@ export async function confirmarPedido(
         return { mpUrl: preferencia.init_point };
       }
     } catch {
-      // Si MP falla, no bloqueamos — flujo sin pago online
+      // Si MP falla, caemos al flujo de efectivo
     }
   }
 
-  // Fallback sin MP: emails y redirect directo
-  const email = user.email ?? "";
+  // Pago en efectivo o fallback sin MP
   try { await sendPedidoConfirmado(email, cotizacion.nombre_producto, pedido.id); } catch { /* */ }
   try { await sendAlertaNuevoPedido(cotizacion.nombre_producto, pedido.id, email); } catch { /* */ }
 

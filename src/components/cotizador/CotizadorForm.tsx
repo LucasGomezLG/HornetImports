@@ -11,18 +11,22 @@ const INPUT_INICIAL: InputCotizacion = {
   urlProducto: "",
   precioUsdProducto: 0,
   pesoKg: 0,
-  largo: 0,
-  ancho: 0,
-  alto: 0,
   categoriaId: "",
+  origen: "asia",
 };
+
+const ORIGENES = [
+  { value: "asia",   label: "Asia / China" },
+  { value: "eeuu",   label: "EE.UU." },
+  { value: "europa", label: "Europa" },
+  { value: "otro",   label: "Otro origen" },
+] as const;
 
 const MENSAJES_ERROR: Record<string, string> = {
   categoria_blacklist: "Esta categoría requiere cotización manual. Te contactamos en menos de 24 hs.",
   precio_invalido: "Ingresá el precio del producto en USD.",
   precio_minimo: "El precio mínimo para importar es USD 25.",
-  dimensiones_invalidas: "Verificá que el peso y las dimensiones estén completos y sean correctos.",
-  volumen_excedido: "El paquete supera los límites del régimen Courier (30 kg / 0.1 m³). Escribinos para cotización especial.",
+  peso_excedido: "El peso debe estar entre 0.1 y 30 kg. Para envíos más pesados, escribinos.",
   rate_limit: "Demasiadas consultas. Esperá un momento e intentá de nuevo.",
 };
 
@@ -48,6 +52,7 @@ export default function CotizadorForm() {
     if (!input.nombreProducto.trim()) { setErrorManual("Ingresá el nombre del producto."); return; }
     if (!input.urlProducto.trim()) { setErrorManual("Ingresá el link del producto."); return; }
     if (!input.categoriaId) { setErrorManual("Seleccioná una categoría."); return; }
+    if (!input.pesoKg) { setErrorManual("Ingresá el peso aproximado del paquete."); return; }
 
     setLoading(true);
     setErrorManual(null);
@@ -135,52 +140,46 @@ export default function CotizadorForm() {
         </section>
 
         <section className={styles.section}>
-          <h3 className={styles.sectionTitle}>Peso y dimensiones</h3>
+          <h3 className={styles.sectionTitle}>Peso y origen</h3>
 
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="pesoKg">Peso real del paquete</label>
-            <div className={styles.inputGroup}>
-              <input
-                className={`${styles.input} ${styles.inputWithSuffix}`}
-                id="pesoKg"
-                name="pesoKg"
-                type="number"
-                min="0.1"
-                step="0.1"
-                placeholder="0.0"
-                value={input.pesoKg || ""}
+          <div className={styles.fieldGrid2}>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="pesoKg">Peso del paquete</label>
+              <div className={styles.inputGroup}>
+                <input
+                  className={`${styles.input} ${styles.inputWithSuffix}`}
+                  id="pesoKg"
+                  name="pesoKg"
+                  type="number"
+                  min="0.1"
+                  max="30"
+                  step="0.1"
+                  placeholder="0.0"
+                  value={input.pesoKg || ""}
+                  onChange={handleChange}
+                />
+                <span className={styles.inputSuffix}>kg</span>
+              </div>
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="origen">País de origen</label>
+              <select
+                className={styles.select}
+                id="origen"
+                name="origen"
+                value={input.origen}
                 onChange={handleChange}
-              />
-              <span className={styles.inputSuffix}>kg</span>
+              >
+                {ORIGENES.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
             </div>
           </div>
 
-          <div className={styles.fieldGrid3}>
-            {(["largo", "ancho", "alto"] as const).map((key) => (
-              <div className={styles.field} key={key}>
-                <label className={styles.label} htmlFor={key}>
-                  {key.charAt(0).toUpperCase() + key.slice(1)}
-                </label>
-                <div className={styles.inputGroup}>
-                  <input
-                    className={`${styles.input} ${styles.inputWithSuffix}`}
-                    id={key}
-                    name={key}
-                    type="number"
-                    min="1"
-                    step="1"
-                    placeholder="0"
-                    value={input[key] || ""}
-                    onChange={handleChange}
-                  />
-                  <span className={styles.inputSuffix}>cm</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
           <p className={styles.hint}>
-            Usamos el mayor entre peso real y peso volumétrico (largo×ancho×alto / 5000).
+            Máximo 30 kg por envío según el régimen Courier AFIP.
           </p>
         </section>
 
@@ -221,6 +220,18 @@ export default function CotizadorForm() {
 
       {resultado?.ok && (
         <div id="resultado-cotizacion">
+          {resultado.desglose.alertaOrigenEuropa && (
+            <div className={styles.alertaEuropa} role="alert">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }}>
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              <div>
+                <strong>Producto de origen europeo</strong>
+                <p>Si hace escala en EE.UU., puede aplicar un arancel adicional del 50% para productos mayores a USD 100. Nuestro equipo lo revisa antes de confirmar el precio final.</p>
+              </div>
+            </div>
+          )}
           <ResultadoCotizacion
             desglose={resultado.desglose}
             cotizacionId={resultado.cotizacionId}

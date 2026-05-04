@@ -102,7 +102,10 @@ export default async function SolicitarPage({
           El precio puede variar ±5% según el tipo de cambio al momento del despacho. Tiempo estimado: 15–25 días hábiles.
         </div>
 
-        <ConfirmarButton cotizacionId={cotizacionId} />
+        <ConfirmarButton
+          cotizacionId={cotizacionId}
+          mpDisponible={!!process.env.MP_ACCESS_TOKEN}
+        />
 
         <a
           href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "5491100000000"}?text=${encodeURIComponent(`Hola! Tengo una consulta sobre mi importación de ${cotizacion.nombre_producto}`)}`}
