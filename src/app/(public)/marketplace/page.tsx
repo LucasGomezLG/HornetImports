@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import ListingGrid from "@/components/marketplace/ListingGrid";
+import { createClient } from "@/lib/supabase/server";
+import ListingGrid, { type ListingDB } from "@/components/marketplace/ListingGrid";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
@@ -8,7 +9,41 @@ export const metadata: Metadata = {
   description: "Comprá a vendedores locales con la comisión más baja del mercado. Menos que Mercado Libre, más transparencia.",
 };
 
-export default function MarketplacePage() {
+export default async function MarketplacePage() {
+  const supabase = await createClient();
+
+  const { data: rawListings } = await supabase
+    .from("listings")
+    .select("id, nombre, descripcion, precio_usd, precio_ars, categoria, stock, vendedor_id")
+    .eq("activo", true)
+    .order("created_at", { ascending: false });
+
+  const items = rawListings ?? [];
+  const vendedorIds = [...new Set(items.map((l) => l.vendedor_id))];
+
+  const { data: profiles } = vendedorIds.length > 0
+    ? await supabase.from("profiles").select("id, nombre, apellido, email").in("id", vendedorIds)
+    : { data: [] };
+
+  const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+
+  const listings: ListingDB[] = items.map((l) => {
+    const p = profileMap.get(l.vendedor_id);
+    const vendedor_nombre = p
+      ? [p.nombre, p.apellido].filter(Boolean).join(" ") || p.email || "Vendedor"
+      : "Vendedor";
+    return {
+      id: l.id,
+      nombre: l.nombre,
+      descripcion: l.descripcion,
+      precio_usd: l.precio_usd,
+      precio_ars: l.precio_ars,
+      categoria: l.categoria,
+      stock: l.stock,
+      vendedor_nombre,
+    };
+  });
+
   return (
     <>
       <section className={styles.hero}>
@@ -40,10 +75,9 @@ export default function MarketplacePage() {
       </section>
 
       <section className={styles.gridSection}>
-        <ListingGrid />
+        <ListingGrid listings={listings} />
       </section>
 
-      {/* ── CTA vendedor ────────────────────────────────── */}
       <section className={styles.vendedorCta}>
         <div className={styles.vendedorInner}>
           <div className={styles.vendedorText}>

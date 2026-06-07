@@ -1,25 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import {
-  PRODUCTOS_MOCK,
-  CATEGORIAS_TIENDA,
-} from "@/lib/tienda/productos-mock";
-import ProductCard from "./ProductCard";
+import ProductCard, { type TiendaProductoDB } from "./ProductCard";
 import styles from "./ProductGrid.module.css";
 
-export default function ProductGrid() {
+const CATEGORIAS_TIENDA = [
+  { id: "todos", label: "Todos" },
+  { id: "autopartes", label: "Autopartes" },
+  { id: "herramientas", label: "Herramientas" },
+  { id: "hogar", label: "Hogar" },
+  { id: "deporte", label: "Deporte" },
+  { id: "accesorios", label: "Accesorios" },
+];
+
+export default function ProductGrid({ productos: allProductos }: { productos: TiendaProductoDB[] }) {
   const [categoriaActiva, setCategoriaActiva] = useState("todos");
   const [query, setQuery] = useState("");
 
-  const productos = PRODUCTOS_MOCK
+  const productos = allProductos
     .filter((p) => categoriaActiva === "todos" || p.categoria === categoriaActiva)
     .filter((p) => {
       const q = query.trim().toLowerCase();
       if (!q) return true;
       return (
         p.nombre.toLowerCase().includes(q) ||
-        p.descripcion.toLowerCase().includes(q)
+        (p.descripcion ?? "").toLowerCase().includes(q)
       );
     });
 

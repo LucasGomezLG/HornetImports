@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
 import ProductGrid from "@/components/tienda/ProductGrid";
 import styles from "./page.module.css";
 
@@ -8,7 +9,15 @@ export const metadata: Metadata = {
     "Productos importados y pre-cotizados listos para comprar. Flete, impuestos y todo incluido en el precio.",
 };
 
-export default function TiendaPage() {
+export default async function TiendaPage() {
+  const supabase = await createClient();
+  const { data: productos } = await supabase
+    .from("tienda_productos")
+    .select("id, nombre, descripcion, categoria, precio_usd, stock, destacado")
+    .eq("activo", true)
+    .order("destacado", { ascending: false })
+    .order("nombre");
+
   return (
     <>
       <section className={styles.hero}>
@@ -23,7 +32,7 @@ export default function TiendaPage() {
       </section>
 
       <section className={styles.gridSection}>
-        <ProductGrid />
+        <ProductGrid productos={productos ?? []} />
       </section>
     </>
   );

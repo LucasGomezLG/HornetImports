@@ -7,17 +7,8 @@ import styles from "./layout.module.css";
 
 const NAV = [
   {
-    href: "/admin",
-    label: "Overview",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/admin/pedidos",
-    label: "Pedidos",
+    href: "/vendedor/productos",
+    label: "Mis productos",
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
@@ -25,48 +16,36 @@ const NAV = [
     ),
   },
   {
-    href: "/admin/vendedores",
-    label: "Vendedores",
+    href: "/marketplace",
+    label: "Ver marketplace",
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/admin/cotizaciones",
-    label: "Cotizaciones",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/admin/tienda",
-    label: "Tienda",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
     ),
   },
 ];
 
-export default function AdminNav({ children, nombre }: { children: React.ReactNode; nombre: string }) {
+export default function VendedorNav({
+  children,
+  nombre,
+}: {
+  children: React.ReactNode;
+  nombre: string;
+}) {
   const pathname = usePathname();
-  const isActive = (href: string) => pathname === href || pathname === `${href}/`;
-  const currentLabel = NAV.find((n) => isActive(n.href))?.label ?? "Admin";
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const currentLabel = NAV.find((n) => isActive(n.href))?.label ?? "Panel de vendedor";
 
   return (
     <div className={styles.layout}>
       <aside className={styles.sidebar}>
         <div className={styles.sidebarTop}>
           <Link href="/" className={styles.logo}>
-            <span className={styles.logoIcon}>H</span>
+            <span className={styles.logoIcon}>V</span>
             <div>
-              <span className={styles.logoText}>Hornet</span>
-              <span className={styles.logoSub}>Admin Panel</span>
+              <span className={styles.logoText}>Hornet Imports</span>
+              <span className={styles.logoSub}>Panel vendedor</span>
             </div>
           </Link>
         </div>
@@ -85,6 +64,12 @@ export default function AdminNav({ children, nombre }: { children: React.ReactNo
         </nav>
 
         <div className={styles.sidebarBottom}>
+          <Link href="/dashboard" className={styles.backLink}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            Mi cuenta
+          </Link>
           <Link href="/" className={styles.backLink}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <polyline points="15 18 9 12 15 6"/>
@@ -99,8 +84,8 @@ export default function AdminNav({ children, nombre }: { children: React.ReactNo
         <header className={styles.topbar}>
           <span className={styles.topbarTitle}>{currentLabel}</span>
           <div className={styles.topbarRight}>
-            <span className={styles.adminBadge}>Admin</span>
-            <div className={styles.avatar}>{nombre[0]?.toUpperCase() ?? "A"}</div>
+            <span className={styles.vendedorBadge}>Vendedor</span>
+            <div className={styles.avatar}>{nombre[0]?.toUpperCase() ?? "V"}</div>
           </div>
         </header>
         <div className={styles.content}>{children}</div>

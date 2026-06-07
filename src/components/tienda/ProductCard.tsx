@@ -1,6 +1,15 @@
 import Link from "next/link";
-import type { ProductoTienda } from "@/lib/tienda/productos-mock";
 import styles from "./ProductCard.module.css";
+
+export interface TiendaProductoDB {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  categoria: string;
+  precio_usd: number;
+  stock: number;
+  destacado: boolean;
+}
 
 const CATEGORY_BG: Record<string, string> = {
   autopartes: "linear-gradient(145deg, #1d2b3a 0%, #2d4052 100%)",
@@ -77,7 +86,7 @@ function formatUSD(valor: number) {
   }).format(valor);
 }
 
-export default function ProductCard({ producto }: { producto: ProductoTienda }) {
+export default function ProductCard({ producto }: { producto: TiendaProductoDB }) {
   const bg = CATEGORY_BG[producto.categoria] ?? CATEGORY_BG.herramientas;
   const icon = CATEGORY_ICON[producto.categoria];
   const stockBajo = producto.stock <= 4;
@@ -106,7 +115,7 @@ export default function ProductCard({ producto }: { producto: ProductoTienda }) 
         <p className={styles.descripcion}>{producto.descripcion}</p>
 
         <div className={styles.priceRow}>
-          <span className={styles.price}>{formatUSD(producto.precioUsd)}</span>
+          <span className={styles.price}>{formatUSD(producto.precio_usd)}</span>
           <span className={styles.priceSuffix}>USD</span>
         </div>
 

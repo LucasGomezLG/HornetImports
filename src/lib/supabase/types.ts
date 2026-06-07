@@ -126,6 +126,40 @@ export interface Database {
         };
         Relationships: [];
       };
+      tienda_productos: {
+        Row: {
+          id: string;
+          nombre: string;
+          descripcion: string | null;
+          categoria: string;
+          precio_usd: number;
+          stock: number;
+          destacado: boolean;
+          activo: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          nombre: string;
+          descripcion?: string | null;
+          categoria: string;
+          precio_usd: number;
+          stock?: number;
+          destacado?: boolean;
+          activo?: boolean;
+        };
+        Update: {
+          nombre?: string;
+          descripcion?: string | null;
+          categoria?: string;
+          precio_usd?: number;
+          stock?: number;
+          destacado?: boolean;
+          activo?: boolean;
+        };
+        Relationships: [];
+      };
       listings: {
         Row: {
           id: string;
@@ -156,6 +190,7 @@ export interface Database {
         Update: {
           nombre?: string;
           descripcion?: string | null;
+          precio_usd?: number | null;
           precio_ars?: number;
           categoria?: string;
           imagen_url?: string | null;

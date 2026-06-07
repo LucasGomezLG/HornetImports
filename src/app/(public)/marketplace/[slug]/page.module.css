@@ -170,6 +170,26 @@
   color: var(--color-text-muted);
 }
 
+.priceUsd {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin-left: var(--space-2);
+}
+
+.stockOk {
+  font-size: 0.875rem;
+  color: #059669;
+  font-weight: 500;
+  margin-bottom: var(--space-5);
+}
+
+.stockAgotado {
+  font-size: 0.875rem;
+  color: #dc2626;
+  font-weight: 500;
+  margin-bottom: var(--space-5);
+}
+
 /* ── CTAs ──────────────────────────────────────────────── */
 .ctaBlock {
   display: flex;

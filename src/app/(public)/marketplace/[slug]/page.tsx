@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { LISTINGS_MOCK } from "@/lib/marketplace/listings-mock";
+import { createClient } from "@/lib/supabase/server";
 import styles from "./page.module.css";
 
 const CATEGORY_BG: Record<string, string> = {
@@ -19,47 +19,50 @@ const CATEGORY_LABEL: Record<string, string> = {
   indumentaria: "Indumentaria",
 };
 
-function StarIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-  );
+function formatARS(n: number) {
+  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n);
 }
 
 function formatUSD(n: number) {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(n);
-}
-
-export async function generateStaticParams() {
-  return LISTINGS_MOCK.map((l) => ({ slug: l.id }));
+  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n);
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const l = LISTINGS_MOCK.find((x) => x.id === slug);
+  const supabase = await createClient();
+  const { data: l } = await supabase.from("listings").select("nombre, descripcion").eq("id", slug).single();
   if (!l) return {};
-  return {
-    title: `${l.nombre} — ${l.vendedor} | Hornet Imports`,
-    description: l.descripcion,
-  };
+  return { title: `${l.nombre} | Hornet Imports`, description: l.descripcion };
 }
 
 export default async function ListingPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const listing = LISTINGS_MOCK.find((l) => l.id === slug);
+  const supabase = await createClient();
+
+  const { data: listing } = await supabase
+    .from("listings")
+    .select("id, nombre, descripcion, precio_usd, precio_ars, categoria, stock, vendedor_id")
+    .eq("id", slug)
+    .eq("activo", true)
+    .single();
+
   if (!listing) notFound();
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("nombre, apellido, email")
+    .eq("id", listing.vendedor_id)
+    .single();
+
+  const vendedorNombre = profile
+    ? [profile.nombre, profile.apellido].filter(Boolean).join(" ") || profile.email || "Vendedor"
+    : "Vendedor";
 
   const bg = CATEGORY_BG[listing.categoria] ?? CATEGORY_BG.herramientas;
   const categoryLabel = CATEGORY_LABEL[listing.categoria] ?? listing.categoria;
 
   return (
     <div className={styles.page}>
-      {/* Breadcrumb */}
       <nav className={styles.breadcrumb}>
         <Link href="/">Inicio</Link>
         <span className={styles.sep}>›</span>
@@ -71,37 +74,37 @@ export default async function ListingPage({ params }: { params: Promise<{ slug: 
       </nav>
 
       <div className={styles.layout}>
-        {/* Imagen */}
         <div className={styles.imageCol}>
           <div className={styles.imageArea} style={{ background: bg }}>
             <span className={styles.commissionBadge}>8–12% comisión</span>
           </div>
         </div>
 
-        {/* Info */}
         <div className={styles.infoCol}>
-          {/* Vendedor */}
           <div className={styles.vendedorRow}>
-            <div className={styles.vendedorAvatar}>{listing.vendedor.charAt(0)}</div>
+            <div className={styles.vendedorAvatar}>{vendedorNombre.charAt(0).toUpperCase()}</div>
             <div className={styles.vendedorInfo}>
-              <span className={styles.vendedorNombre}>{listing.vendedor}</span>
-              <div className={styles.stars}>
-                {Array.from({ length: listing.calificacion }).map((_, i) => (
-                  <span key={i} className={styles.star}><StarIcon /></span>
-                ))}
-                <span className={styles.starsLabel}>{listing.calificacion}.0</span>
-              </div>
+              <span className={styles.vendedorNombre}>{vendedorNombre}</span>
             </div>
           </div>
 
           <span className={styles.categoryChip}>{categoryLabel}</span>
           <h1 className={styles.nombre}>{listing.nombre}</h1>
-          <p className={styles.descripcion}>{listing.descripcion}</p>
+          {listing.descripcion && <p className={styles.descripcion}>{listing.descripcion}</p>}
 
           <div className={styles.priceBlock}>
-            <span className={styles.price}>{formatUSD(listing.precioUsd)}</span>
-            <span className={styles.priceCurrency}>USD</span>
+            <span className={styles.price}>{formatARS(listing.precio_ars)}</span>
+            <span className={styles.priceCurrency}>ARS</span>
+            {listing.precio_usd && (
+              <span className={styles.priceUsd}>≈ {formatUSD(listing.precio_usd)} USD</span>
+            )}
           </div>
+
+          {listing.stock > 0 ? (
+            <p className={styles.stockOk}>✓ {listing.stock} unidades disponibles</p>
+          ) : (
+            <p className={styles.stockAgotado}>Sin stock momentáneamente</p>
+          )}
 
           <div className={styles.ctaBlock}>
             <Link

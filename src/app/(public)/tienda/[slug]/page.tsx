@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { PRODUCTOS_MOCK } from "@/lib/tienda/productos-mock";
+import { createClient } from "@/lib/supabase/server";
 import styles from "./page.module.css";
 
 const CATEGORY_BG: Record<string, string> = {
@@ -19,20 +19,6 @@ const CATEGORY_LABEL: Record<string, string> = {
   accesorios: "Accesorios",
 };
 
-export async function generateStaticParams() {
-  return PRODUCTOS_MOCK.map((p) => ({ slug: p.id }));
-}
-
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const p = PRODUCTOS_MOCK.find((x) => x.id === slug);
-  if (!p) return {};
-  return {
-    title: `${p.nombre} | Hornet Imports`,
-    description: p.descripcion,
-  };
-}
-
 function formatUSD(n: number) {
   return new Intl.NumberFormat("es-AR", {
     style: "currency",
@@ -41,9 +27,25 @@ function formatUSD(n: number) {
   }).format(n);
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data: p } = await supabase.from("tienda_productos").select("nombre, descripcion").eq("id", slug).single();
+  if (!p) return {};
+  return { title: `${p.nombre} | Hornet Imports`, description: p.descripcion };
+}
+
 export default async function ProductoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const producto = PRODUCTOS_MOCK.find((p) => p.id === slug);
+  const supabase = await createClient();
+
+  const { data: producto } = await supabase
+    .from("tienda_productos")
+    .select("id, nombre, descripcion, categoria, precio_usd, stock, destacado")
+    .eq("id", slug)
+    .eq("activo", true)
+    .single();
+
   if (!producto) notFound();
 
   const bg = CATEGORY_BG[producto.categoria] ?? CATEGORY_BG.herramientas;
@@ -52,7 +54,6 @@ export default async function ProductoPage({ params }: { params: Promise<{ slug:
 
   return (
     <div className={styles.page}>
-      {/* Breadcrumb */}
       <nav className={styles.breadcrumb}>
         <Link href="/">Inicio</Link>
         <span className={styles.sep}>›</span>
@@ -64,7 +65,6 @@ export default async function ProductoPage({ params }: { params: Promise<{ slug:
       </nav>
 
       <div className={styles.layout}>
-        {/* Imagen */}
         <div className={styles.imageCol}>
           <div className={styles.imageArea} style={{ background: bg }}>
             {producto.destacado && (
@@ -77,14 +77,13 @@ export default async function ProductoPage({ params }: { params: Promise<{ slug:
           </p>
         </div>
 
-        {/* Info */}
         <div className={styles.infoCol}>
           <span className={styles.categoryChip}>{categoryLabel}</span>
           <h1 className={styles.nombre}>{producto.nombre}</h1>
-          <p className={styles.descripcion}>{producto.descripcion}</p>
+          {producto.descripcion && <p className={styles.descripcion}>{producto.descripcion}</p>}
 
           <div className={styles.priceBlock}>
-            <span className={styles.price}>{formatUSD(producto.precioUsd)}</span>
+            <span className={styles.price}>{formatUSD(producto.precio_usd)}</span>
             <span className={styles.priceCurrency}>USD</span>
             <span className={styles.priceNote}>Precio de referencia. Incluye arancel estimado.</span>
           </div>

@@ -2,8 +2,27 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { LISTINGS_MOCK, CATEGORIAS_MARKETPLACE } from "@/lib/marketplace/listings-mock";
 import styles from "./ListingGrid.module.css";
+
+export interface ListingDB {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  vendedor_nombre: string;
+  categoria: string;
+  precio_usd: number | null;
+  precio_ars: number;
+  stock: number;
+}
+
+const CATEGORIAS_MARKETPLACE = [
+  { id: "todos", label: "Todos" },
+  { id: "autopartes", label: "Autopartes" },
+  { id: "herramientas", label: "Herramientas" },
+  { id: "electronica", label: "Electrónica" },
+  { id: "hogar", label: "Hogar" },
+  { id: "indumentaria", label: "Indumentaria" },
+];
 
 function SearchIcon() {
   return (
@@ -13,13 +32,6 @@ function SearchIcon() {
   );
 }
 
-function StarIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-  );
-}
 
 const CATEGORY_BG: Record<string, string> = {
   autopartes: "linear-gradient(145deg, #1d2b3a 0%, #2d4052 100%)",
@@ -29,23 +41,24 @@ const CATEGORY_BG: Record<string, string> = {
   indumentaria: "linear-gradient(145deg, #4c1d95 0%, #7c3aed 100%)",
 };
 
-function formatUSD(n: number) {
-  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n);
+
+function formatARS(n: number) {
+  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n);
 }
 
-export default function ListingGrid() {
+export default function ListingGrid({ listings: allListings }: { listings: ListingDB[] }) {
   const [categoriaActiva, setCategoriaActiva] = useState("todos");
   const [query, setQuery] = useState("");
 
-  const listings = LISTINGS_MOCK
+  const listings = allListings
     .filter((l) => categoriaActiva === "todos" || l.categoria === categoriaActiva)
     .filter((l) => {
       const q = query.trim().toLowerCase();
       if (!q) return true;
       return (
         l.nombre.toLowerCase().includes(q) ||
-        l.descripcion.toLowerCase().includes(q) ||
-        l.vendedor.toLowerCase().includes(q)
+        (l.descripcion ?? "").toLowerCase().includes(q) ||
+        l.vendedor_nombre.toLowerCase().includes(q)
       );
     });
 
@@ -96,21 +109,16 @@ export default function ListingGrid() {
             <div className={styles.content}>
               <div className={styles.vendedor}>
                 <div className={styles.vendedorAvatar}>
-                  {listing.vendedor.charAt(0)}
+                  {listing.vendedor_nombre.charAt(0).toUpperCase()}
                 </div>
-                <span>{listing.vendedor}</span>
-                <div className={styles.stars}>
-                  {Array.from({ length: listing.calificacion }).map((_, i) => (
-                    <span key={i} className={styles.star}><StarIcon /></span>
-                  ))}
-                </div>
+                <span>{listing.vendedor_nombre}</span>
               </div>
 
               <h3 className={styles.nombre}>{listing.nombre}</h3>
               <p className={styles.descripcion}>{listing.descripcion}</p>
 
               <div className={styles.bottom}>
-                <span className={styles.price}>{formatUSD(listing.precioUsd)}</span>
+                <span className={styles.price}>{formatARS(listing.precio_ars)}</span>
                 <Link href={`/marketplace/${listing.id}`} className={styles.btnVer}>Ver producto</Link>
               </div>
             </div>
