@@ -89,6 +89,19 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
+.btnAdmin {
+  padding: var(--space-2) var(--space-3);
+  background: rgba(245, 166, 35, 0.15);
+  color: var(--color-accent);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btnAdmin:hover { background: rgba(245, 166, 35, 0.25); }
+
 .btnCta {
   padding: var(--space-2) var(--space-4);
   background: var(--color-accent);
@@ -337,6 +350,19 @@
 
 .drawerBtnCta:hover { background: var(--color-accent-hover); }
 .drawerBtnCta:active { transform: scale(0.98); }
+
+.drawerBtnAdmin {
+  display: block;
+  text-align: center;
+  padding: var(--space-2) var(--space-4);
+  background: rgba(245, 166, 35, 0.12);
+  color: var(--color-accent);
+  font-size: 0.875rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  transition: background 0.15s;
+}
+.drawerBtnAdmin:hover { background: rgba(245, 166, 35, 0.22); }
 
 /* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 768px) {

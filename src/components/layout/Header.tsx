@@ -3,7 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { TipoCuenta } from "@/lib/supabase/types";
 import styles from "./Header.module.css";
+
+interface AuthUser {
+  nombre: string;
+  tipo: TipoCuenta;
+}
 
 
 const NAV_LINKS = [
@@ -104,7 +110,7 @@ function ChevronRight() {
   );
 }
 
-export default function Header() {
+export default function Header({ user }: { user?: AuthUser | null }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href || pathname === `${href}/`;
@@ -145,7 +151,19 @@ export default function Header() {
           </nav>
 
           <div className={styles.headerRight}>
-            <Link href="/login" className={styles.btnLogin}>Ingresar</Link>
+            {user ? (
+              <>
+                {user.tipo === "admin" && (
+                  <Link href="/admin" className={styles.btnAdmin}>Admin ↗</Link>
+                )}
+                {user.tipo === "vendedor" && (
+                  <Link href="/vendedor/productos" className={styles.btnAdmin}>Mis productos</Link>
+                )}
+                <Link href="/dashboard" className={styles.btnLogin}>{user.nombre}</Link>
+              </>
+            ) : (
+              <Link href="/login" className={styles.btnLogin}>Ingresar</Link>
+            )}
             <Link href="/cotizar" className={styles.btnCta}>Cotizá ahora</Link>
           </div>
 
@@ -244,9 +262,27 @@ export default function Header() {
         </nav>
 
         <div className={styles.drawerFooter}>
-          <Link href="/login" className={styles.drawerBtnLogin} onClick={close}>
-            Ingresar
-          </Link>
+          {user ? (
+            <>
+              {user.tipo === "admin" && (
+                <Link href="/admin" className={styles.drawerBtnAdmin} onClick={close}>
+                  Panel Admin ↗
+                </Link>
+              )}
+              {user.tipo === "vendedor" && (
+                <Link href="/vendedor/productos" className={styles.drawerBtnAdmin} onClick={close}>
+                  Mis productos ↗
+                </Link>
+              )}
+              <Link href="/dashboard" className={styles.drawerBtnLogin} onClick={close}>
+                {user.nombre} · Mi cuenta
+              </Link>
+            </>
+          ) : (
+            <Link href="/login" className={styles.drawerBtnLogin} onClick={close}>
+              Ingresar
+            </Link>
+          )}
           <Link href="/cotizar" className={styles.drawerBtnCta} onClick={close}>
             Cotizá ahora →
           </Link>
