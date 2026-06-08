@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import type { TipoCuenta } from "@/lib/supabase/types";
 import styles from "./Header.module.css";
 
@@ -110,12 +111,45 @@ function ChevronRight() {
   );
 }
 
-export default function Header({ user }: { user?: AuthUser | null }) {
+export default function Header({ user: initialUser }: { user?: AuthUser | null }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(initialUser ?? null);
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href || pathname === `${href}/`;
 
   const close = () => setMenuOpen(false);
+
+  // Verificar sesión en el cliente para garantizar estado correcto
+  // sin depender del caché del servidor
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function syncUser() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { setUser(null); return; }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("nombre, tipo")
+        .eq("id", session.user.id)
+        .single();
+
+      if (profile) {
+        setUser({
+          nombre: profile.nombre ?? session.user.email?.split("@")[0] ?? "Mi cuenta",
+          tipo: profile.tipo,
+        });
+      }
+    }
+
+    syncUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      syncUser();
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
