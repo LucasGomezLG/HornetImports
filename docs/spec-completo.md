@@ -1844,9 +1844,914 @@ public class CorsConfig implements WebMvcConfigurer {
 
 **DBA:**
 - [ ] Crear la base de datos en el servidor elegido
-- [ ] Ejecutar el schema SQL completo
-- [ ] Crear tabla `refresh_tokens`
-- [ ] Crear tabla `email_confirmations`
+- [ ] Ejecutar el schema SQL completo (sección 8 + 10.17)
 - [ ] Configurar backups automáticos
 - [ ] Configurar índices (ya incluidos en el schema)
 - [ ] Verificar que la secuencia `pedido_seq` funcione correctamente
+
+---
+
+### 10.17 Schema completo — Tablas de auth faltantes
+
+Estas tablas van en el mismo script junto con las de la sección 8:
+
+```sql
+-- TABLA: refresh_tokens
+CREATE TABLE refresh_tokens (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  token      TEXT        NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id);
+CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
+
+-- TABLA: email_confirmations (para confirmación de cuenta y reset de contraseña)
+CREATE TABLE email_confirmations (
+  token      TEXT        PRIMARY KEY,
+  user_id    UUID        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  tipo       TEXT        NOT NULL DEFAULT 'registro',  -- registro | reset_password
+  expires_at TIMESTAMPTZ NOT NULL,
+  usado      BOOLEAN     NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_email_confirmations_user ON email_confirmations(user_id);
+```
+
+---
+
+### 10.18 SecurityConfig de Spring Boot
+
+```java
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    @Autowired
+    private JwtFilter jwtFilter;
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+
+                // Públicas — sin token
+                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/registro").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/recuperar-contrasena").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/actualizar-contrasena").permitAll()
+                .requestMatchers(HttpMethod.GET,  "/api/auth/confirmar").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/cotizar").permitAll()
+                .requestMatchers(HttpMethod.GET,  "/api/tipo-cambio").permitAll()
+                .requestMatchers(HttpMethod.GET,  "/api/tienda/**").permitAll()
+                .requestMatchers(HttpMethod.GET,  "/api/marketplace/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/pagos/webhook").permitAll()
+
+                // Solo admin
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                // Solo vendedor o admin
+                .requestMatchers("/api/vendedor/**").hasAnyRole("VENDEDOR", "ADMIN")
+
+                // Resto requiere login
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+```
+
+```java
+// JwtFilter.java
+@Component
+public class JwtFilter extends OncePerRequestFilter {
+
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private ProfileRepository profileRepository;
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain chain) throws IOException, ServletException {
+        String header = request.getHeader("Authorization");
+        if (header == null || !header.startsWith("Bearer ")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        String token = header.substring(7);
+        try {
+            String userId = jwtService.extractUserId(token);
+            Profile profile = profileRepository.findById(UUID.fromString(userId)).orElse(null);
+            if (profile != null && jwtService.isValid(token)) {
+                List<GrantedAuthority> authorities = List.of(
+                    new SimpleGrantedAuthority("ROLE_" + profile.getTipo().name().toUpperCase())
+                );
+                UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(profile, null, authorities);
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }
+        } catch (Exception ignored) {}
+
+        chain.doFilter(request, response);
+    }
+}
+```
+
+```java
+// JwtService.java
+@Service
+public class JwtService {
+
+    @Value("${jwt.secret}")
+    private String secret;
+
+    @Value("${jwt.access-token-expiration}")
+    private long accessExpiration;
+
+    public String generateAccessToken(Profile profile) {
+        return Jwts.builder()
+            .subject(profile.getId().toString())
+            .claim("email", profile.getEmail())
+            .claim("tipo", profile.getTipo().name())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + accessExpiration))
+            .signWith(getKey())
+            .compact();
+    }
+
+    public String extractUserId(String token) {
+        return Jwts.parser().verifyWith(getKey()).build()
+            .parseSignedClaims(token).getPayload().getSubject();
+    }
+
+    public boolean isValid(String token) {
+        try {
+            Jwts.parser().verifyWith(getKey()).build().parseSignedClaims(token);
+            return true;
+        } catch (Exception e) { return false; }
+    }
+
+    private SecretKey getKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
+}
+```
+
+---
+
+### 10.19 Generador de ID personalizado HI-0001 en JPA
+
+El campo `id` de `pedidos` no puede ser un UUID estándar. Necesita el formato `HI-0001`.
+
+**Solución: usar `@PrePersist` con una sequence nativa de PostgreSQL.**
+
+```java
+@Entity
+@Table(name = "pedidos")
+public class Pedido {
+
+    @Id
+    @Column(name = "id", length = 10)
+    private String id;
+
+    // ... otros campos
+
+    // Sin @GeneratedValue — lo generamos manualmente antes del INSERT
+}
+```
+
+```java
+// En PedidoRepository
+public interface PedidoRepository extends JpaRepository<Pedido, String> {}
+```
+
+```java
+// En PedidoService — generar el ID antes de persistir
+@Service
+public class PedidoService {
+
+    @Autowired
+    private EntityManager entityManager;
+
+    @Autowired
+    private PedidoRepository pedidoRepository;
+
+    @Transactional
+    public Pedido crearPedido(/* params */) {
+        // Obtener el siguiente valor de la secuencia
+        Long nextVal = (Long) entityManager
+            .createNativeQuery("SELECT nextval('pedido_seq')")
+            .getSingleResult();
+
+        String pedidoId = String.format("HI-%04d", nextVal);
+
+        Pedido pedido = new Pedido();
+        pedido.setId(pedidoId);
+        // ... setear otros campos
+
+        return pedidoRepository.save(pedido);
+    }
+}
+```
+
+---
+
+### 10.20 Formato estándar de errores
+
+Todos los endpoints deben retornar errores en este formato exacto:
+
+```json
+// Error de validación (400)
+{
+  "error": "El precio debe ser mayor a 0.",
+  "code": "PRECIO_INVALIDO"
+}
+
+// Sin autorización (401)
+{
+  "error": "Token inválido o expirado.",
+  "code": "TOKEN_INVALIDO"
+}
+
+// Sin permisos (403)
+{
+  "error": "No tenés permisos para realizar esta acción.",
+  "code": "SIN_PERMISOS"
+}
+
+// No encontrado (404)
+{
+  "error": "Cotización no encontrada.",
+  "code": "NOT_FOUND"
+}
+
+// Error interno (500)
+{
+  "error": "Error interno del servidor.",
+  "code": "SERVER_ERROR"
+}
+```
+
+```java
+// GlobalExceptionHandler.java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException e) {
+        return ResponseEntity.status(403)
+            .body(new ErrorResponse("No tenés permisos para realizar esta acción.", "SIN_PERMISOS"));
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(EntityNotFoundException e) {
+        return ResponseEntity.status(404)
+            .body(new ErrorResponse(e.getMessage(), "NOT_FOUND"));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException e) {
+        return ResponseEntity.status(400)
+            .body(new ErrorResponse(e.getMessage(), "VALIDATION_ERROR"));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGeneral(Exception e) {
+        log.error("Error no manejado", e);
+        return ResponseEntity.status(500)
+            .body(new ErrorResponse("Error interno del servidor.", "SERVER_ERROR"));
+    }
+}
+
+// ErrorResponse.java
+public record ErrorResponse(String error, String code) {}
+```
+
+---
+
+### 10.21 Validación del webhook de Mercado Pago
+
+MP envía el header `x-signature` en cada webhook. Hay que verificarlo para evitar llamadas falsas.
+
+```java
+@PostMapping("/api/pagos/webhook")
+public ResponseEntity<Map<String, Boolean>> webhook(
+        @RequestBody String rawBody,
+        @RequestHeader(value = "x-signature", required = false) String signature,
+        @RequestHeader(value = "x-request-id", required = false) String requestId,
+        HttpServletRequest request) {
+
+    // Validar firma de MP
+    if (!mpService.validarFirma(rawBody, signature, requestId)) {
+        log.warn("Webhook MP con firma inválida");
+        return ResponseEntity.ok(Map.of("ok", true)); // Responder 200 igual, no revelar error
+    }
+
+    // Procesar el webhook...
+    mpService.procesarWebhook(rawBody);
+    return ResponseEntity.ok(Map.of("ok", true));
+}
+```
+
+```java
+// En MercadoPagoService
+public boolean validarFirma(String body, String signature, String requestId) {
+    if (signature == null) return false;
+    try {
+        // MP envía: ts=TIMESTAMP,v1=HASH
+        // El mensaje a hashear es: "id:{data.id};request-id:{x-request-id};ts:{ts};"
+        String[] parts = signature.split(",");
+        String ts = Arrays.stream(parts)
+            .filter(p -> p.startsWith("ts=")).findFirst()
+            .map(p -> p.substring(3)).orElse("");
+        String v1 = Arrays.stream(parts)
+            .filter(p -> p.startsWith("v1=")).findFirst()
+            .map(p -> p.substring(3)).orElse("");
+
+        // Parsear el body para obtener el data.id
+        String dataId = // extraer data.id del JSON
+
+        String manifest = "id:" + dataId + ";request-id:" + requestId + ";ts:" + ts + ";";
+        String secret = webhookSecret; // configurado en MP Dashboard
+
+        Mac mac = Mac.getInstance("HmacSHA256");
+        mac.init(new SecretKeySpec(secret.getBytes(), "HmacSHA256"));
+        String computed = HexFormat.of().formatHex(mac.doFinal(manifest.getBytes()));
+
+        return computed.equals(v1);
+    } catch (Exception e) {
+        return false;
+    }
+}
+```
+
+> **Nota:** El `webhookSecret` se configura en el panel de MP → Webhooks → "Clave secreta". Agregar a `application.properties` como `mercadopago.webhook-secret`.
+
+---
+
+### 10.22 Endpoint faltante: GET /cotizaciones (historial del usuario)
+
+```java
+// GET /cotizaciones — cotizaciones del usuario logueado
+// Query params: estado (opcional)
+
+// Response 200
+[
+  {
+    "id": "uuid",
+    "nombreProducto": "Pastillas de freno Ford Ka",
+    "urlProducto": "https://...",
+    "precioUsd": 32.50,
+    "pesoKg": 1.2,
+    "categoria": "autopartes",
+    "costoTotalArs": 138901.50,
+    "estado": "pendiente",  // pendiente | aprobada | rechazada | expirada
+    "aprobadaPorAdmin": false,
+    "tipoServicio": "completo",
+    "createdAt": "2026-06-08T12:00:00Z"
+  }
+]
+```
+
+Agregar también en la sección de rutas React:
+```jsx
+<Route path="/cotizaciones" element={<ProtectedRoute><CotizacionesPage /></ProtectedRoute>} />
+```
+
+Y en el dashboard del usuario mostrar las últimas 3 cotizaciones junto con los últimos pedidos.
+
+---
+
+### 10.23 Paginación en endpoints de listas
+
+Todos los endpoints que devuelven listas deben soportar paginación:
+
+```
+GET /api/admin/pedidos?page=0&size=20&sort=createdAt,desc
+GET /api/admin/cotizaciones?page=0&size=50&estado=pendiente
+GET /api/marketplace?page=0&size=24&categoria=autopartes
+GET /api/cotizaciones?page=0&size=10
+```
+
+**Formato de respuesta paginada:**
+
+```json
+{
+  "content": [ /* array de items */ ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 150,
+  "totalPages": 8,
+  "last": false
+}
+```
+
+**Implementación en Spring:**
+
+```java
+// En el controller
+@GetMapping("/api/admin/pedidos")
+public ResponseEntity<Page<PedidoDTO>> getPedidos(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size,
+        @RequestParam(required = false) String estado) {
+
+    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+    Page<Pedido> pedidos = estado != null
+        ? pedidoRepository.findByEstado(EstadoPedido.valueOf(estado), pageable)
+        : pedidoRepository.findAll(pageable);
+
+    return ResponseEntity.ok(pedidos.map(PedidoDTO::from));
+}
+```
+
+---
+
+### 10.24 Conversión JSONB en JPA (campo desglose)
+
+El campo `desglose` de cotizaciones es JSONB en PostgreSQL. JPA necesita un converter para manejarlo.
+
+```java
+// CotizacionDesgloseConverter.java
+@Converter
+public class CotizacionDesgloseConverter implements AttributeConverter<CotizacionDesglose, String> {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
+
+    @Override
+    public String convertToDatabaseColumn(CotizacionDesglose desglose) {
+        try { return mapper.writeValueAsString(desglose); }
+        catch (Exception e) { return "{}"; }
+    }
+
+    @Override
+    public CotizacionDesglose convertToEntityAttribute(String json) {
+        try { return mapper.readValue(json, CotizacionDesglose.class); }
+        catch (Exception e) { return new CotizacionDesglose(); }
+    }
+}
+```
+
+```java
+// En la entidad Cotizacion.java
+@Column(name = "desglose", columnDefinition = "jsonb")
+@Convert(converter = CotizacionDesgloseConverter.class)
+private CotizacionDesglose desglose;
+```
+
+```java
+// application.properties — importante para JSONB
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+```
+
+---
+
+### 10.25 Búsqueda en marketplace (JPA Query)
+
+```java
+// ListingRepository.java
+public interface ListingRepository extends JpaRepository<Listing, UUID> {
+
+    @Query("""
+        SELECT l FROM Listing l
+        JOIN FETCH l.vendedor v
+        WHERE l.activo = true
+        AND (:categoria IS NULL OR l.categoria = :categoria)
+        AND (:search IS NULL OR
+             LOWER(l.nombre) LIKE LOWER(CONCAT('%', :search, '%')) OR
+             LOWER(l.descripcion) LIKE LOWER(CONCAT('%', :search, '%')))
+        ORDER BY l.createdAt DESC
+    """)
+    Page<Listing> buscar(
+        @Param("categoria") String categoria,
+        @Param("search") String search,
+        Pageable pageable
+    );
+}
+```
+
+```java
+// MarketplaceController.java
+@GetMapping("/api/marketplace")
+public ResponseEntity<Page<ListingDTO>> getListings(
+        @RequestParam(required = false) String categoria,
+        @RequestParam(required = false) String search,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "24") int size) {
+
+    Pageable pageable = PageRequest.of(page, size);
+    return ResponseEntity.ok(
+        listingRepository.buscar(categoria, search, pageable).map(ListingDTO::from)
+    );
+}
+```
+
+---
+
+### 10.26 Cron para actualizar precio ARS de listings
+
+Cada vez que el tipo de cambio cambia, el precio ARS de los listings queda desactualizado. Un cron lo actualiza automáticamente.
+
+```java
+@Service
+public class PrecioUpdateService {
+
+    @Autowired
+    private ListingRepository listingRepository;
+
+    @Autowired
+    private TipoCambioService tipoCambioService;
+
+    @Autowired
+    private EntityManager entityManager;
+
+    // Ejecutar todos los días a las 9:00 AM hora Argentina
+    @Scheduled(cron = "0 0 9 * * *", zone = "America/Argentina/Buenos_Aires")
+    @Transactional
+    public void actualizarPreciosArs() {
+        double tipoCambio = tipoCambioService.obtenerTipoCambio();
+
+        int updated = entityManager.createQuery("""
+            UPDATE Listing l
+            SET l.precioArs = l.precioUsd * :tipoCambio
+            WHERE l.precioUsd IS NOT NULL AND l.activo = true
+        """)
+        .setParameter("tipoCambio", tipoCambio)
+        .executeUpdate();
+
+        log.info("Precios ARS actualizados: {} listings al tipo de cambio {}", updated, tipoCambio);
+    }
+}
+```
+
+```java
+// Habilitar scheduling en la app
+@SpringBootApplication
+@EnableScheduling
+public class HornetImportsApplication { ... }
+```
+
+---
+
+### 10.27 Entidades JPA completas (campos clave)
+
+```java
+// Profile.java
+@Entity @Table(name = "profiles")
+@Getter @Setter @NoArgsConstructor
+public class Profile {
+    @Id
+    private UUID id;  // Seteado manualmente = mismo ID que el sistema de auth
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    private String nombre;
+    private String apellido;
+    private String telefono;
+
+    @Column(unique = true)
+    private String cuit;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TipoCuenta tipo = TipoCuenta.comprador;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt = OffsetDateTime.now();
+}
+
+// TipoCuenta.java
+public enum TipoCuenta { comprador, vendedor, admin }
+
+// Cotizacion.java
+@Entity @Table(name = "cotizaciones")
+@Getter @Setter @NoArgsConstructor
+public class Cotizacion {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private Profile user;  // nullable (cotización anónima)
+
+    @Column(name = "producto_url", nullable = false)
+    private String productoUrl;
+
+    @Column(name = "nombre_producto", nullable = false)
+    private String nombreProducto;
+
+    @Column(name = "precio_usd", nullable = false, precision = 10, scale = 2)
+    private BigDecimal precioUsd;
+
+    @Column(name = "peso_kg", nullable = false, precision = 6, scale = 3)
+    private BigDecimal pesoKg;
+
+    @Column(nullable = false)
+    private String categoria;
+
+    @Column(name = "costo_total_ars", nullable = false, precision = 14, scale = 2)
+    private BigDecimal costoTotalArs;
+
+    @Column(columnDefinition = "jsonb", nullable = false)
+    @Convert(converter = CotizacionDesgloseConverter.class)
+    private CotizacionDesglose desglose = new CotizacionDesglose();
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EstadoCotizacion estado = EstadoCotizacion.pendiente;
+
+    @Column(name = "aprobada_por_admin", nullable = false)
+    private boolean aprobadaPorAdmin = false;
+
+    @Column(name = "tipo_servicio", nullable = false)
+    private String tipoServicio = "completo";
+
+    @Column(name = "utm_source")
+    private String utmSource;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt = OffsetDateTime.now();
+}
+
+// EstadoCotizacion.java
+public enum EstadoCotizacion { pendiente, aprobada, rechazada, expirada }
+
+// Pedido.java
+@Entity @Table(name = "pedidos")
+@Getter @Setter @NoArgsConstructor
+public class Pedido {
+    @Id
+    @Column(length = 10)
+    private String id;  // HI-0001 — seteado manualmente via sequence
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cotizacion_id")
+    private Cotizacion cotizacion;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private Profile user;
+
+    @Column(name = "producto_nombre", nullable = false)
+    private String productoNombre;
+
+    @Column(name = "producto_url")
+    private String productoUrl;
+
+    @Column(name = "precio_usd", nullable = false, precision = 10, scale = 2)
+    private BigDecimal precioUsd;
+
+    @Column(name = "costo_total_ars", nullable = false, precision = 14, scale = 2)
+    private BigDecimal costoTotalArs;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EstadoPedido estado = EstadoPedido.en_proceso;
+
+    @Column(name = "tracking_code")
+    private String trackingCode;
+
+    @Column(name = "tracking_codigo_cliente")
+    private String trackingCodigoCliente;
+
+    @Column(name = "tipo_servicio", nullable = false)
+    private String tipoServicio = "completo";
+
+    private String origen;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt = OffsetDateTime.now();
+
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt = OffsetDateTime.now();
+
+    @PreUpdate
+    public void preUpdate() { this.updatedAt = OffsetDateTime.now(); }
+}
+
+// EstadoPedido.java
+public enum EstadoPedido { en_proceso, comprado, en_transito, en_aduana, entregado, cancelado }
+
+// Listing.java
+@Entity @Table(name = "listings")
+@Getter @Setter @NoArgsConstructor
+public class Listing {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vendedor_id", nullable = false)
+    private Profile vendedor;
+
+    @Column(nullable = false)
+    private String nombre;
+
+    private String descripcion;
+
+    @Column(name = "precio_usd", precision = 10, scale = 2)
+    private BigDecimal precioUsd;
+
+    @Column(name = "precio_ars", nullable = false, precision = 14, scale = 2)
+    private BigDecimal precioArs;
+
+    @Column(nullable = false)
+    private String categoria;
+
+    @Column(name = "imagen_url")
+    private String imagenUrl;
+
+    @Column(nullable = false)
+    private int stock = 0;
+
+    @Column(nullable = false)
+    private boolean activo = true;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt = OffsetDateTime.now();
+}
+
+// TiendaProducto.java
+@Entity @Table(name = "tienda_productos")
+@Getter @Setter @NoArgsConstructor
+public class TiendaProducto {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(nullable = false)
+    private String nombre;
+
+    private String descripcion;
+
+    @Column(nullable = false)
+    private String categoria;
+
+    @Column(name = "precio_usd", nullable = false, precision = 10, scale = 2)
+    private BigDecimal precioUsd;
+
+    @Column(nullable = false)
+    private int stock = 0;
+
+    @Column(nullable = false)
+    private boolean destacado = false;
+
+    @Column(nullable = false)
+    private boolean activo = true;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt = OffsetDateTime.now();
+
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt = OffsetDateTime.now();
+
+    @PreUpdate
+    public void preUpdate() { this.updatedAt = OffsetDateTime.now(); }
+}
+```
+
+---
+
+### 10.28 Validaciones en los DTOs (Bean Validation)
+
+```java
+// CotizarRequest.java
+public class CotizarRequest {
+    @NotBlank(message = "El nombre del producto es obligatorio.")
+    private String nombreProducto;
+
+    private String urlProducto;  // Obligatorio solo si tipoServicio = completo (validar en Service)
+
+    @NotNull
+    @DecimalMin(value = "0.01", message = "El precio debe ser mayor a 0.")
+    private BigDecimal precioUsd;
+
+    @NotNull
+    @DecimalMin(value = "0.01")
+    @DecimalMax(value = "30.0", message = "El peso no puede superar los 30 kg.")
+    private BigDecimal pesoKg;
+
+    @NotBlank
+    private String categoriaId;
+
+    @NotNull
+    @Pattern(regexp = "particular|mayorista")
+    private String tipo;
+
+    @NotNull
+    @Pattern(regexp = "completo|forwarding")
+    private String tipoServicio;
+
+    @Pattern(regexp = "asia|europa|eeuu|otro")
+    private String origen;
+
+    private String utmSource;
+}
+
+// RegistroRequest.java
+public class RegistroRequest {
+    @NotBlank @Email
+    private String email;
+
+    @NotBlank @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres.")
+    private String password;
+
+    @NotBlank
+    private String nombre;
+
+    @Pattern(regexp = "comprador|vendedor")
+    private String tipo = "comprador";
+}
+
+// ActualizarPerfilRequest.java
+public class ActualizarPerfilRequest {
+    @NotBlank(message = "El nombre es obligatorio.")
+    private String nombre;
+
+    private String apellido;
+
+    @Pattern(regexp = "\\+?[0-9\\s\\-]{7,20}", message = "Teléfono inválido.")
+    private String telefono;
+}
+```
+
+---
+
+### 10.29 Variables de entorno — Lista completa y actualizada
+
+**Backend `application.properties`:**
+
+```properties
+# Base de datos
+spring.datasource.url=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+spring.datasource.username=${DB_USER}
+spring.datasource.password=${DB_PASSWORD}
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+# JWT
+jwt.secret=${JWT_SECRET}
+jwt.access-token-expiration=3600000
+jwt.refresh-token-expiration=2592000000
+
+# Email (Resend)
+spring.mail.host=smtp.resend.com
+spring.mail.port=465
+spring.mail.username=resend
+spring.mail.password=${RESEND_API_KEY}
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.ssl.enable=true
+email.from=${EMAIL_FROM}
+email.admin=${EMAIL_ADMIN}
+
+# Mercado Pago
+mercadopago.access-token=${MP_ACCESS_TOKEN}
+mercadopago.webhook-secret=${MP_WEBHOOK_SECRET}
+
+# App
+app.base-url=${APP_BASE_URL}
+app.frontend-url=${FRONTEND_URL}
+
+# Scheduling
+spring.task.scheduling.enabled=true
+```
+
+| Variable | Descripción | Ejemplo |
+|----------|-------------|---------|
+| `DB_HOST` | Host de PostgreSQL | `localhost` o `db.railway.app` |
+| `DB_PORT` | Puerto | `5432` |
+| `DB_NAME` | Nombre de la BD | `hornet_imports` |
+| `DB_USER` | Usuario de BD | `postgres` |
+| `DB_PASSWORD` | Contraseña de BD | — |
+| `JWT_SECRET` | Clave secreta JWT (mín. 32 chars) | — |
+| `RESEND_API_KEY` | API key de Resend | `re_XXXXXXXX` |
+| `EMAIL_FROM` | Email remitente | `noreply@hornetimports.com` |
+| `EMAIL_ADMIN` | Email del admin | `admin@hornetimports.com` |
+| `MP_ACCESS_TOKEN` | Access token de Mercado Pago | `APP_USR-XXXXXXXX` |
+| `MP_WEBHOOK_SECRET` | Clave secreta del webhook en MP | — |
+| `APP_BASE_URL` | URL del backend | `https://api.hornetimports.com` |
+| `FRONTEND_URL` | URL del frontend (para CORS) | `https://hornetimports.com` |
+
+**Frontend `.env`:**
+
+```env
+VITE_API_BASE_URL=https://api.hornetimports.com/api
+```
