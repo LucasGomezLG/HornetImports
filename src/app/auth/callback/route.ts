@@ -36,22 +36,24 @@ export async function GET(request: Request) {
 
   const user = data.user;
 
-  // Garantizar que el profile existe (backup del trigger)
-  const db = createAdminClient();
-  const { data: existing } = await db
-    .from("profiles")
-    .select("id")
-    .eq("id", user.id)
-    .single();
+  // Garantizar profile (backup del trigger) — solo para signup, no recovery
+  if (next !== "/actualizar-contrasena") {
+    const db = createAdminClient();
+    const { data: existing } = await db
+      .from("profiles")
+      .select("id")
+      .eq("id", user.id)
+      .single();
 
-  if (!existing) {
-    const meta = user.user_metadata ?? {};
-    await db.from("profiles").insert({
-      id: user.id,
-      email: user.email!,
-      tipo: (meta.tipo as "comprador" | "vendedor") ?? "comprador",
-      nombre: meta.nombre ?? null,
-    });
+    if (!existing) {
+      const meta = user.user_metadata ?? {};
+      await db.from("profiles").insert({
+        id: user.id,
+        email: user.email!,
+        tipo: (meta.tipo as "comprador" | "vendedor") ?? "comprador",
+        nombre: (meta.nombre as string) ?? null,
+      });
+    }
   }
 
   return NextResponse.redirect(`${origin}${next}`);

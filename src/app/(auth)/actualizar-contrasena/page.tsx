@@ -12,14 +12,16 @@ export default function ActualizarContrasenaPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const supabase = createClient();
-
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setReady(true);
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        window.location.href = "/recuperar-contrasena";
+      } else {
+        setReady(true);
+      }
     });
-    return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -29,14 +31,16 @@ export default function ActualizarContrasenaPage() {
     setLoading(true);
     setError(null);
 
+    const supabase = createClient();
     const { error } = await supabase.auth.updateUser({ password });
+
     if (error) {
       setError("No se pudo actualizar la contraseña. El link puede haber expirado.");
+      setLoading(false);
     } else {
       setSuccess(true);
       setTimeout(() => { window.location.href = "/dashboard"; }, 2000);
     }
-    setLoading(false);
   }
 
   if (success) {
@@ -58,10 +62,6 @@ export default function ActualizarContrasenaPage() {
         <div className={styles.card}>
           <div className={styles.header}>
             <h1 className={styles.title}>Verificando enlace...</h1>
-            <p className={styles.subtitle}>
-              Si llegaste acá por error,{" "}
-              <a href="/recuperar-contrasena" className={styles.link}>solicitá un nuevo enlace</a>.
-            </p>
           </div>
         </div>
       </div>
@@ -89,7 +89,6 @@ export default function ActualizarContrasenaPage() {
               autoFocus
             />
           </div>
-
           <div className={styles.field}>
             <label className={styles.label} htmlFor="confirm">Confirmar contraseña</label>
             <input
@@ -101,9 +100,7 @@ export default function ActualizarContrasenaPage() {
               onChange={(e) => setConfirm(e.target.value)}
             />
           </div>
-
           {error && <div className={styles.errorBox} role="alert">{error}</div>}
-
           <button type="submit" className={styles.btnSubmit} disabled={loading}>
             {loading ? "Guardando..." : "Guardar contraseña →"}
           </button>
