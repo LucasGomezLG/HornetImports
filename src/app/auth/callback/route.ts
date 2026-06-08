@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cookies } from "next/headers";
+import { logger } from "@/lib/utils/logger";
 import type { Database } from "@/lib/supabase/types";
 
 export async function GET(request: Request) {
@@ -9,11 +10,12 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
 
-  if (!code) return NextResponse.redirect(`${origin}/login`);
+  if (!code) {
+    logger.warn("AUTH_CALLBACK", "Callback sin código", { next });
+    return NextResponse.redirect(`${origin}/login`);
+  }
 
   const cookieStore = await cookies();
-
-  // Definir la respuesta de redirect primero para poder settear cookies en ella
   const redirectResponse = NextResponse.redirect(`${origin}${next}`);
 
   const supabase = createServerClient<Database>(
@@ -23,7 +25,6 @@ export async function GET(request: Request) {
       cookies: {
         getAll: () => cookieStore.getAll(),
         setAll: (cookiesToSet) => {
-          // Setear cookies tanto en el store como en la respuesta de redirect
           cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options);
             redirectResponse.cookies.set(name, value, options);
@@ -36,20 +37,18 @@ export async function GET(request: Request) {
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error || !data.user) {
+    logger.error("AUTH_CALLBACK", "Error intercambiando código", { error: error?.message });
     return NextResponse.redirect(`${origin}/login?error=callback`);
   }
 
   const user = data.user;
+  logger.info("AUTH_CALLBACK", "Sesión establecida", { userId: user.id, email: user.email, next });
 
-  // Garantizar profile (backup del trigger) — solo para signup
   if (next !== "/actualizar-contrasena") {
     try {
       const db = createAdminClient();
       const { data: existing } = await db
-        .from("profiles")
-        .select("id")
-        .eq("id", user.id)
-        .single();
+        .from("profiles").select("id").eq("id", user.id).single();
 
       if (!existing) {
         const meta = user.user_metadata ?? {};
@@ -59,9 +58,12 @@ export async function GET(request: Request) {
           tipo: (meta.tipo as "comprador" | "vendedor") ?? "comprador",
           nombre: (meta.nombre as string) ?? null,
         });
+        logger.info("AUTH_CALLBACK", "Profile creado via callback", { userId: user.id, tipo: meta.tipo ?? "comprador" });
+      } else {
+        logger.info("AUTH_CALLBACK", "Profile ya existía", { userId: user.id });
       }
-    } catch {
-      // No bloquear el redirect si falla la creación del profile
+    } catch (err) {
+      logger.error("AUTH_CALLBACK", "Error creando profile", { userId: user.id, error: String(err) });
     }
   }
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/utils/logger";
 import type { EstadoPedido } from "@/lib/supabase/types";
 
 async function verificarAdmin() {
@@ -20,7 +21,10 @@ export async function actualizarPedido(
   trackingCode: string
 ): Promise<{ error: string } | void> {
   const admin = await verificarAdmin();
-  if (!admin) return { error: "Sin permisos." };
+  if (!admin) {
+    logger.warn("ADMIN_PEDIDOS", "Acceso denegado: no es admin");
+    return { error: "Sin permisos." };
+  }
 
   const db = createAdminClient();
   const { error } = await db
@@ -28,6 +32,11 @@ export async function actualizarPedido(
     .update({ estado, tracking_code: trackingCode.trim() || null })
     .eq("id", pedidoId);
 
-  if (error) return { error: "No se pudo actualizar." };
+  if (error) {
+    logger.error("ADMIN_PEDIDOS", "Error actualizando pedido", { pedidoId, estado, error: error.message });
+    return { error: "No se pudo actualizar." };
+  }
+
+  logger.info("ADMIN_PEDIDOS", "Pedido actualizado", { pedidoId, estado, adminId: admin.id, tracking: trackingCode || null });
   revalidatePath("/admin/pedidos");
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { calcularCotizacion } from "@/lib/cotizador/calcular";
+import { logger } from "@/lib/utils/logger";
 import type { InputCotizacion } from "@/lib/cotizador/types";
 import type { Database, Json } from "@/lib/supabase/types";
 
@@ -23,22 +24,39 @@ async function getTipoCambio(): Promise<number> {
     const data = await res.json();
     return data.venta as number;
   } catch {
+    logger.warn("COTIZADOR", "Falló fetch tipo de cambio, usando fallback 1200");
     return 1200;
   }
 }
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "anon";
+
   if (!checkRL(request)) {
+    logger.warn("COTIZADOR", "Rate limit aplicado", { ip });
     return NextResponse.json({ ok: false, razon: "rate_limit" }, { status: 429 });
   }
 
   const body = await request.json() as InputCotizacion;
 
+  logger.info("COTIZADOR", "Cotización solicitada", {
+    producto: body.nombreProducto,
+    categoria: body.categoriaId,
+    precioUsd: body.precioUsdProducto,
+    pesoKg: body.pesoKg,
+    tipo: body.tipo,
+    tipoServicio: body.tipoServicio,
+    utm: body.utmSource,
+    ip,
+  });
+
   const esForwarding = body.tipoServicio === "forwarding";
   if (!body.nombreProducto?.trim() || !body.categoriaId) {
+    logger.warn("COTIZADOR", "Input inválido: falta nombre o categoría", { ip });
     return NextResponse.json({ ok: false, razon: "precio_invalido" }, { status: 400 });
   }
   if (!esForwarding && !body.urlProducto?.trim()) {
+    logger.warn("COTIZADOR", "Input inválido: falta URL", { ip });
     return NextResponse.json({ ok: false, razon: "precio_invalido" }, { status: 400 });
   }
 
@@ -46,10 +64,10 @@ export async function POST(request: NextRequest) {
   const resultado = calcularCotizacion(body, tipoCambio);
 
   if (!resultado.ok) {
+    logger.warn("COTIZADOR", "Cotización rechazada", { razon: resultado.razon, producto: body.nombreProducto });
     return NextResponse.json(resultado);
   }
 
-  // Guardar en Supabase
   const cookieStore = await cookies();
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -87,13 +105,20 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error || !cotizacion) {
-    // Devolver resultado sin ID si falla el guardado (no bloquear al usuario)
+    logger.error("COTIZADOR", "Error guardando cotización en DB", {
+      error: error?.message,
+      userId: user?.id ?? "anon",
+      producto: body.nombreProducto,
+    });
     return NextResponse.json({ ok: true, desglose: resultado.desglose, cotizacionId: null });
   }
 
-  return NextResponse.json({
-    ok: true,
-    desglose: resultado.desglose,
+  logger.info("COTIZADOR", "Cotización guardada", {
     cotizacionId: cotizacion.id,
+    userId: user?.id ?? "anon",
+    totalArs: resultado.desglose.totalArs,
+    totalUsd: resultado.desglose.total,
   });
+
+  return NextResponse.json({ ok: true, desglose: resultado.desglose, cotizacionId: cotizacion.id });
 }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendLinkCotizacion, sendCotizacionRechazada } from "@/lib/email/send";
+import { logger } from "@/lib/utils/logger";
 
 async function verificarAdmin() {
   const supabase = await createClient();
@@ -19,25 +20,37 @@ export async function aprobarCotizacion(
   emailUsuario: string,
   nombreProducto: string
 ): Promise<{ error: string } | void> {
-  if (!await verificarAdmin()) return { error: "Sin permisos." };
+  const admin = await verificarAdmin();
+  if (!admin) {
+    logger.warn("ADMIN_COTIZACIONES", "Acceso denegado: no es admin");
+    return { error: "Sin permisos." };
+  }
 
   const db = createAdminClient();
   const { data: c } = await db
     .from("cotizaciones").select("id, estado").eq("id", cotizacionId).single();
 
-  if (!c || c.estado !== "pendiente")
+  if (!c || c.estado !== "pendiente") {
+    logger.warn("ADMIN_COTIZACIONES", "Cotización no aprobable", { cotizacionId, estado: c?.estado });
     return { error: "Solo se puede aprobar cotizaciones pendientes." };
+  }
 
   const { error } = await db
-    .from("cotizaciones")
-    .update({ aprobada_por_admin: true })
-    .eq("id", cotizacionId);
+    .from("cotizaciones").update({ aprobada_por_admin: true }).eq("id", cotizacionId);
 
-  if (error) return { error: "No se pudo actualizar la cotización." };
+  if (error) {
+    logger.error("ADMIN_COTIZACIONES", "Error aprobando cotización", { cotizacionId, error: error.message });
+    return { error: "No se pudo actualizar la cotización." };
+  }
+
+  logger.info("ADMIN_COTIZACIONES", "Cotización aprobada", { cotizacionId, adminId: admin.id, email: emailUsuario });
 
   try {
     await sendLinkCotizacion(emailUsuario, nombreProducto, cotizacionId);
-  } catch { /* email falla silenciosamente */ }
+    logger.info("ADMIN_COTIZACIONES", "Email de aprobación enviado", { cotizacionId, email: emailUsuario });
+  } catch (err) {
+    logger.error("ADMIN_COTIZACIONES", "Error enviando email de aprobación", { cotizacionId, error: String(err) });
+  }
 
   revalidatePath("/admin/cotizaciones");
 }
@@ -48,20 +61,30 @@ export async function rechazarCotizacion(
   nombreProducto: string,
   motivo: string
 ): Promise<{ error: string } | void> {
-  if (!await verificarAdmin()) return { error: "Sin permisos." };
+  const admin = await verificarAdmin();
+  if (!admin) {
+    logger.warn("ADMIN_COTIZACIONES", "Acceso denegado: no es admin");
+    return { error: "Sin permisos." };
+  }
 
   const db = createAdminClient();
   const { error } = await db
-    .from("cotizaciones")
-    .update({ estado: "rechazada" })
-    .eq("id", cotizacionId);
+    .from("cotizaciones").update({ estado: "rechazada" }).eq("id", cotizacionId);
 
-  if (error) return { error: "No se pudo actualizar la cotización." };
+  if (error) {
+    logger.error("ADMIN_COTIZACIONES", "Error rechazando cotización", { cotizacionId, error: error.message });
+    return { error: "No se pudo actualizar la cotización." };
+  }
+
+  logger.info("ADMIN_COTIZACIONES", "Cotización rechazada", { cotizacionId, adminId: admin.id, motivo });
 
   if (emailUsuario) {
     try {
       await sendCotizacionRechazada(emailUsuario, nombreProducto, motivo || undefined);
-    } catch { /* no bloquear si el email falla */ }
+      logger.info("ADMIN_COTIZACIONES", "Email de rechazo enviado", { cotizacionId, email: emailUsuario });
+    } catch (err) {
+      logger.error("ADMIN_COTIZACIONES", "Error enviando email de rechazo", { cotizacionId, error: String(err) });
+    }
   }
 
   revalidatePath("/admin/cotizaciones");

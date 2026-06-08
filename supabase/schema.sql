@@ -1,42 +1,7 @@
 -- ============================================================
--- Hornet Imports — Schema completo
--- ¿Cómo correr? Supabase Dashboard → SQL Editor → pegar y ejecutar
--- Para empezar de cero: ejecutar el bloque DROP primero,
--- luego todo el resto de una sola vez (o sección por sección).
+-- Hornet Imports — Schema completo v2
+-- Ejecutar DESPUÉS de drop.sql (o en una DB vacía).
 -- ============================================================
-
-
--- ============================================================
--- SECCIÓN 0 — DROP (empezar de cero)
--- Borrar en orden inverso de dependencias.
---
--- NOTA: no usamos "DROP TRIGGER IF EXISTS ... ON tabla" porque
--- falla si la tabla no existe (IF EXISTS sólo cubre el trigger,
--- no la tabla). En su lugar, dropeamos las funciones con CASCADE
--- (que elimina automáticamente los triggers que las usan), y
--- luego las tablas con CASCADE (que elimina triggers restantes,
--- índices y policies de una vez).
--- ============================================================
-
--- Funciones CASCADE → elimina también los triggers que las usan
--- (pedidos_updated_at y on_auth_user_created)
-DROP FUNCTION IF EXISTS set_updated_at()  CASCADE;
-DROP FUNCTION IF EXISTS handle_new_user() CASCADE;
-
--- Tablas CASCADE → elimina políticas RLS, índices y FK constraints
--- Orden: primero las que tienen FKs apuntando a otras
-DROP TABLE IF EXISTS pedidos      CASCADE;
-DROP TABLE IF EXISTS cotizaciones CASCADE;
-DROP TABLE IF EXISTS listings     CASCADE;
-DROP TABLE IF EXISTS profiles     CASCADE;
-
--- Secuencia de pedidos
-DROP SEQUENCE IF EXISTS pedido_seq;
-
--- Tipos ENUM
-DROP TYPE IF EXISTS estado_pedido      CASCADE;
-DROP TYPE IF EXISTS estado_cotizacion  CASCADE;
-DROP TYPE IF EXISTS tipo_cuenta        CASCADE;
 
 
 -- ============================================================
@@ -100,21 +65,23 @@ CREATE TABLE cotizaciones (
 
 -- ── pedidos ──────────────────────────────────────────────────
 CREATE TABLE pedidos (
-  id               TEXT          PRIMARY KEY DEFAULT 'HI-' || LPAD(nextval('pedido_seq')::TEXT, 4, '0'),
-  cotizacion_id    UUID          REFERENCES cotizaciones(id) ON DELETE SET NULL,
-  user_id          UUID          NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  producto_nombre  TEXT          NOT NULL,
-  producto_url     TEXT,
-  precio_usd       NUMERIC(10,2) NOT NULL,
-  costo_total_ars  NUMERIC(14,2) NOT NULL,
-  estado           estado_pedido NOT NULL DEFAULT 'en_proceso',
-  tracking_code    TEXT,
-  origen           TEXT,
-  created_at       TIMESTAMPTZ   NOT NULL DEFAULT now(),
-  updated_at       TIMESTAMPTZ   NOT NULL DEFAULT now()
+  id                    TEXT          PRIMARY KEY DEFAULT 'HI-' || LPAD(nextval('pedido_seq')::TEXT, 4, '0'),
+  cotizacion_id         UUID          REFERENCES cotizaciones(id) ON DELETE SET NULL,
+  user_id               UUID          NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  producto_nombre       TEXT          NOT NULL,
+  producto_url          TEXT,
+  precio_usd            NUMERIC(10,2) NOT NULL,
+  costo_total_ars       NUMERIC(14,2) NOT NULL,
+  estado                estado_pedido NOT NULL DEFAULT 'en_proceso',
+  tracking_code         TEXT,
+  tracking_codigo_cliente TEXT,
+  tipo_servicio         TEXT          NOT NULL DEFAULT 'completo',
+  origen                TEXT,
+  created_at            TIMESTAMPTZ   NOT NULL DEFAULT now(),
+  updated_at            TIMESTAMPTZ   NOT NULL DEFAULT now()
 );
 
--- ── listings ─────────────────────────────────────────────────
+-- ── listings (marketplace de vendedores) ─────────────────────
 CREATE TABLE listings (
   id           UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
   vendedor_id  UUID          NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -129,13 +96,25 @@ CREATE TABLE listings (
   created_at   TIMESTAMPTZ   NOT NULL DEFAULT now()
 );
 
+-- ── tienda_productos (catálogo curado por admin) ──────────────
+CREATE TABLE tienda_productos (
+  id          UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+  nombre      TEXT          NOT NULL,
+  descripcion TEXT,
+  categoria   TEXT          NOT NULL,
+  precio_usd  NUMERIC(10,2) NOT NULL,
+  stock       INT           NOT NULL DEFAULT 0,
+  destacado   BOOLEAN       NOT NULL DEFAULT false,
+  activo      BOOLEAN       NOT NULL DEFAULT true,
+  created_at  TIMESTAMPTZ   NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ   NOT NULL DEFAULT now()
+);
+
 
 -- ============================================================
 -- SECCIÓN 4 — Funciones y Triggers
 -- ============================================================
 
--- Crea el profile automáticamente cuando se registra un usuario.
--- Lee tipo y nombre desde raw_user_meta_data (pasados en signUp options.data).
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
@@ -154,7 +133,6 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 
--- Mantiene updated_at al día en cada UPDATE de pedidos.
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
 BEGIN
@@ -165,6 +143,10 @@ $$;
 
 CREATE TRIGGER pedidos_updated_at
   BEFORE UPDATE ON pedidos
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER tienda_productos_updated_at
+  BEFORE UPDATE ON tienda_productos
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 
@@ -179,6 +161,8 @@ CREATE INDEX idx_pedidos_estado         ON pedidos(estado);
 CREATE INDEX idx_listings_vendedor      ON listings(vendedor_id);
 CREATE INDEX idx_listings_categoria     ON listings(categoria);
 CREATE INDEX idx_listings_activo        ON listings(activo);
+CREATE INDEX idx_tienda_productos_categoria ON tienda_productos(categoria);
+CREATE INDEX idx_tienda_productos_activo    ON tienda_productos(activo);
 
 
 -- ============================================================
@@ -196,20 +180,16 @@ CREATE POLICY "users update own profile"
   ON profiles FOR UPDATE
   USING (auth.uid() = id);
 
--- No hay INSERT policy para usuarios: profiles solo se crean via el trigger
--- handle_new_user (SECURITY DEFINER), que bypasea RLS. Exponer INSERT sería
--- un agujero de seguridad que permitiría insertar profiles arbitrarios.
-
 CREATE POLICY "admin read all profiles"
   ON profiles FOR SELECT
   USING (
-    EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.tipo = 'admin')
+    (SELECT tipo FROM profiles WHERE id = auth.uid()) = 'admin'
   );
 
 CREATE POLICY "admin update all profiles"
   ON profiles FOR UPDATE
   USING (
-    EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.tipo = 'admin')
+    (SELECT tipo FROM profiles WHERE id = auth.uid()) = 'admin'
   );
 
 -- ── cotizaciones ─────────────────────────────────────────────
@@ -219,13 +199,10 @@ CREATE POLICY "users read own cotizaciones"
   ON cotizaciones FOR SELECT
   USING (auth.uid() = user_id);
 
--- Permite insert sin user_id (anónimo cotiza) o con user_id propio.
 CREATE POLICY "users insert cotizaciones"
   ON cotizaciones FOR INSERT
   WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
 
--- Necesaria para confirmarPedido: actualiza estado a "aprobada" con el client
--- de usuario (no admin). Sin esta policy el UPDATE silently falla.
 CREATE POLICY "users update own cotizaciones"
   ON cotizaciones FOR UPDATE
   USING (auth.uid() = user_id);
@@ -243,8 +220,6 @@ CREATE POLICY "users read own pedidos"
   ON pedidos FOR SELECT
   USING (auth.uid() = user_id);
 
--- Necesaria para confirmarPedido: inserta el pedido con el client de usuario.
--- Sin esta policy el INSERT falla y la acción devuelve error al usuario.
 CREATE POLICY "users insert own pedidos"
   ON pedidos FOR INSERT
   WITH CHECK (auth.uid() = user_id);
@@ -273,11 +248,42 @@ CREATE POLICY "admin manage all listings"
     EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.tipo = 'admin')
   );
 
+-- ── tienda_productos ─────────────────────────────────────────
+ALTER TABLE tienda_productos ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "anyone read active tienda_productos"
+  ON tienda_productos FOR SELECT
+  USING (activo = true);
+
+CREATE POLICY "admin manage tienda_productos"
+  ON tienda_productos FOR ALL
+  USING (
+    EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.tipo = 'admin')
+  );
+
 
 -- ============================================================
--- SECCIÓN 7 — Datos iniciales (opcional)
--- Crear primer usuario admin manualmente luego de registrarlo:
---
---   UPDATE profiles SET tipo = 'admin' WHERE email = 'tu@email.com';
---
+-- SECCIÓN 7 — Datos iniciales
 -- ============================================================
+
+-- Seed tienda_productos con catálogo base
+INSERT INTO tienda_productos (nombre, descripcion, categoria, precio_usd, stock, destacado) VALUES
+  ('Filtro de aceite Toyota Corolla 2014–2022', 'Filtro original OEM compatible con motores 1.8L y 2.0L.', 'autopartes', 18.90, 12, false),
+  ('Pastillas de freno delanteras Ford Ka', 'Set de 4 pastillas de cerámica de alto rendimiento.', 'autopartes', 32.50, 8, true),
+  ('Kit de distribución Chevrolet Cruze 1.4T', 'Cadena + tensor + polea. Compatible con motor turbo 1.4.', 'autopartes', 89.90, 5, true),
+  ('Sensor de oxígeno universal Bosch', 'Sonda lambda universal 4 cables. Rosca M18 × 1.5.', 'autopartes', 45.00, 7, false),
+  ('Par de faros LED Honda Civic 2022+', 'Luz de día DRL integrada, plug & play, par completo.', 'autopartes', 124.00, 3, false),
+  ('Amortiguador trasero Volkswagen Gol KYB', 'Gas presurizado KYB para Gol Trend 2009–2018.', 'autopartes', 67.00, 6, false),
+  ('Llave de torque digital 1/2" 20–200 Nm', 'Pantalla LCD, memoria de 9 ajustes, alarma sonora.', 'herramientas', 89.00, 4, true),
+  ('Set de llaves combinadas 20 piezas Cr-V', 'Acero Cr-V pulido satinado. Medidas 6 mm a 32 mm.', 'herramientas', 54.00, 9, false),
+  ('Destornillador eléctrico inalámbrico 4V', 'Batería de litio, 28 puntas incluidas, torque 3.5 Nm.', 'herramientas', 67.50, 6, false),
+  ('Multímetro digital profesional AC/DC', 'True RMS, temperatura, capacitancia. Bolso incluido.', 'herramientas', 38.90, 11, false),
+  ('Purificador de aire HEPA H13 280 m³/h', 'Filtro verdadero H13, modo nocturno, WiFi. Hasta 35 m².', 'hogar', 89.00, 4, true),
+  ('Cafetera pour-over acero inoxidable 600 ml', 'Filtro permanente, jarra térmica, libre de BPA.', 'hogar', 42.00, 7, false),
+  ('Rodilleras de escalada bouldering premium', 'Neopreno reforzado, velcro ajustable, par.', 'deporte', 38.00, 5, false),
+  ('Soporte lumbar para ciclismo y running', 'Velcro anatómico, transpirable, talla S–XL.', 'deporte', 24.90, 8, false),
+  ('Soporte magnético para celular — auto', 'Imán N52, para rejilla de ventilación, universal.', 'accesorios', 19.90, 15, false),
+  ('Organizador de cables escritorio 6 clips', 'Silicona premium, adhesivo 3M, colores surtidos.', 'accesorios', 14.90, 20, false);
+
+-- Después de registrarte, corré esto para ser admin:
+-- UPDATE profiles SET tipo = 'admin' WHERE email = 'tu@email.com';
