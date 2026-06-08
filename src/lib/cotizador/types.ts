@@ -37,7 +37,8 @@ export type RazonRechazo =
   | "precio_invalido"
   | "precio_minimo"
   | "precio_minimo_mayorista"
-  | "peso_excedido";
+  | "peso_excedido"
+  | "rate_limit";
 
 export type CotizacionResult =
   | { ok: true; desglose: CotizacionDesglose; cotizacionId: string | null }

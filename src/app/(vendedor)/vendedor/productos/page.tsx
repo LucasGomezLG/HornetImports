@@ -2,23 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { toggleListingActivo, eliminarListing } from "./actions";
+import { obtenerTipoCambio } from "@/lib/utils/exchange-rate";
 import ListingForm from "./ListingForm";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = { title: "Mis productos | Hornet Imports" };
-
-const FALLBACK_RATE = 1320;
-
-async function obtenerTipoCambio(): Promise<number> {
-  try {
-    const res = await fetch("https://dolarapi.com/v1/dolares/blue", { next: { revalidate: 3600 } });
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    return (data.venta as number) ?? FALLBACK_RATE;
-  } catch {
-    return FALLBACK_RATE;
-  }
-}
 
 function formatUSD(n: number | null) {
   if (!n) return "—";

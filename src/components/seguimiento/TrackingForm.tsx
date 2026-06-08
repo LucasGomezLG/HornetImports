@@ -73,11 +73,13 @@ export default function TrackingForm({ pedidos = [] }: Props) {
 
   function buscar(code: string) {
     setError(null);
-    const trimmed = code.trim();
+    const trimmed = code.trim().toUpperCase();
     if (!trimmed) { setError("Ingresá tu número de orden."); return; }
 
     const pedido = pedidos.find(
-      (p) => p.id === trimmed || p.tracking_code === trimmed
+      (p) =>
+        p.id.toUpperCase() === trimmed ||
+        (p.tracking_code ?? "").toUpperCase() === trimmed
     );
 
     if (pedido) {

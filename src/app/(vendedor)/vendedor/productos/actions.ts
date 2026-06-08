@@ -2,18 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { obtenerTipoCambio } from "@/lib/utils/exchange-rate";
 
-const FALLBACK_RATE = 1320;
-
-async function obtenerTipoCambio(): Promise<number> {
-  try {
-    const res = await fetch("https://dolarapi.com/v1/dolares/blue", { next: { revalidate: 3600 } });
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    return (data.venta as number) ?? FALLBACK_RATE;
-  } catch {
-    return FALLBACK_RATE;
-  }
+async function verificarVendedor() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: profile } = await supabase
+    .from("profiles").select("tipo").eq("id", user.id).single();
+  if (profile?.tipo !== "vendedor" && profile?.tipo !== "admin") return null;
+  return user;
 }
 
 export async function guardarListing(
@@ -22,8 +20,8 @@ export async function guardarListing(
   formData: FormData
 ): Promise<{ error: string | null; success: boolean }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "No autenticado.", success: false };
+  const user = await verificarVendedor();
+  if (!user) return { error: "Sin permisos.", success: false };
 
   const nombre = (formData.get("nombre") as string | null)?.trim() ?? "";
   const descripcion = (formData.get("descripcion") as string | null)?.trim() || null;
@@ -60,7 +58,7 @@ export async function guardarListing(
 
 export async function toggleListingActivo(id: string, activo: boolean): Promise<void> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await verificarVendedor();
   if (!user) return;
   await supabase.from("listings").update({ activo: !activo }).eq("id", id).eq("vendedor_id", user.id);
   revalidatePath("/vendedor/productos");
@@ -69,7 +67,7 @@ export async function toggleListingActivo(id: string, activo: boolean): Promise<
 
 export async function eliminarListing(id: string): Promise<void> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await verificarVendedor();
   if (!user) return;
   await supabase.from("listings").delete().eq("id", id).eq("vendedor_id", user.id);
   revalidatePath("/vendedor/productos");
