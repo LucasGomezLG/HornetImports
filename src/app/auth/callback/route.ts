@@ -13,6 +13,9 @@ export async function GET(request: Request) {
 
   const cookieStore = await cookies();
 
+  // Definir la respuesta de redirect primero para poder settear cookies en ella
+  const redirectResponse = NextResponse.redirect(`${origin}${next}`);
+
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -20,9 +23,11 @@ export async function GET(request: Request) {
       cookies: {
         getAll: () => cookieStore.getAll(),
         setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          );
+          // Setear cookies tanto en el store como en la respuesta de redirect
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+            redirectResponse.cookies.set(name, value, options);
+          });
         },
       },
     }
@@ -36,25 +41,29 @@ export async function GET(request: Request) {
 
   const user = data.user;
 
-  // Garantizar profile (backup del trigger) — solo para signup, no recovery
+  // Garantizar profile (backup del trigger) — solo para signup
   if (next !== "/actualizar-contrasena") {
-    const db = createAdminClient();
-    const { data: existing } = await db
-      .from("profiles")
-      .select("id")
-      .eq("id", user.id)
-      .single();
+    try {
+      const db = createAdminClient();
+      const { data: existing } = await db
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .single();
 
-    if (!existing) {
-      const meta = user.user_metadata ?? {};
-      await db.from("profiles").insert({
-        id: user.id,
-        email: user.email!,
-        tipo: (meta.tipo as "comprador" | "vendedor") ?? "comprador",
-        nombre: (meta.nombre as string) ?? null,
-      });
+      if (!existing) {
+        const meta = user.user_metadata ?? {};
+        await db.from("profiles").insert({
+          id: user.id,
+          email: user.email!,
+          tipo: (meta.tipo as "comprador" | "vendedor") ?? "comprador",
+          nombre: (meta.nombre as string) ?? null,
+        });
+      }
+    } catch {
+      // No bloquear el redirect si falla la creación del profile
     }
   }
 
-  return NextResponse.redirect(`${origin}${next}`);
+  return redirectResponse;
 }

@@ -1,6 +1,7 @@
-import { unstable_noStore as noStore } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import Header from "@/components/layout/Header";
+
+export const dynamic = "force-dynamic";
 import Footer from "@/components/layout/Footer";
 import MobileBottomNav from "@/components/ui/MobileBottomNav";
 import type { TipoCuenta } from "@/lib/supabase/types";
@@ -10,7 +11,6 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  noStore(); // nunca cachear — el estado de auth cambia entre requests
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 

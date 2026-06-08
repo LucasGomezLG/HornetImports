@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function actualizarPerfil(
   _prev: { error: string | null; success: boolean },
@@ -18,7 +19,9 @@ export async function actualizarPerfil(
 
   if (!nombre) return { error: "El nombre es obligatorio.", success: false };
 
-  const { error } = await supabase
+  // Usar admin client para bypassear RLS (el user ya fue verificado arriba)
+  const db = createAdminClient();
+  const { error } = await db
     .from("profiles")
     .update({ nombre, apellido: apellido || null, telefono: telefono || null })
     .eq("id", user.id);
