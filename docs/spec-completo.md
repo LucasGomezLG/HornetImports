@@ -2754,4 +2754,220 @@ spring.task.scheduling.enabled=true
 
 ```env
 VITE_API_BASE_URL=https://api.hornetimports.com/api
+VITE_CLOUDINARY_CLOUD_NAME=tu_cloud_name
+VITE_CLOUDINARY_UPLOAD_PRESET=hornet_listings
 ```
+
+---
+
+### 10.30 Subida de imágenes con Cloudinary
+
+Las imágenes de los listings se suben directamente desde el browser a Cloudinary, sin pasar por el backend. El backend solo genera la firma de seguridad y guarda la URL resultante.
+
+#### Setup en Cloudinary
+
+1. Crear cuenta en https://cloudinary.com (plan free: 25 GB)
+2. Anotar: `Cloud Name`, `API Key`, `API Secret`
+3. En Cloudinary Dashboard → Settings → Upload → Upload Presets → Add preset:
+   - Preset name: `hornet_listings`
+   - Signing mode: **Signed** (no unsigned — el backend firma cada upload)
+   - Folder: `listings`
+   - Allowed formats: `jpg, jpeg, png, webp`
+   - Max file size: 5 MB
+   - Transformation: `w_800, h_800, c_limit, q_auto, f_auto` (resize automático)
+
+#### Flujo completo
+
+```
+1. Vendedor selecciona una imagen en el formulario (input type="file")
+2. Frontend llama: POST /api/vendedor/imagenes/firma
+3. Backend genera firma con API Secret de Cloudinary
+4. Frontend recibe la firma y sube la imagen DIRECTAMENTE a Cloudinary
+5. Cloudinary devuelve la URL pública
+6. Frontend incluye esa URL en el request de crear/editar listing
+```
+
+#### Backend — Endpoint de firma
+
+```java
+// VendedorImagenController.java
+@RestController
+@RequestMapping("/api/vendedor/imagenes")
+public class VendedorImagenController {
+
+    @Autowired
+    private CloudinaryService cloudinaryService;
+
+    @PostMapping("/firma")
+    public ResponseEntity<FirmaResponse> generarFirma(
+            @AuthenticationPrincipal Profile user) {
+
+        long timestamp = System.currentTimeMillis() / 1000;
+        String folder = "listings/" + user.getId();
+
+        String firma = cloudinaryService.generarFirma(timestamp, folder);
+
+        return ResponseEntity.ok(new FirmaResponse(
+            firma,
+            timestamp,
+            folder,
+            cloudinaryService.getApiKey(),
+            cloudinaryService.getCloudName()
+        ));
+    }
+}
+
+// FirmaResponse.java
+public record FirmaResponse(
+    String signature,
+    long timestamp,
+    String folder,
+    String apiKey,
+    String cloudName
+) {}
+```
+
+```java
+// CloudinaryService.java
+@Service
+public class CloudinaryService {
+
+    @Value("${cloudinary.cloud-name}")
+    private String cloudName;
+
+    @Value("${cloudinary.api-key}")
+    private String apiKey;
+
+    @Value("${cloudinary.api-secret}")
+    private String apiSecret;
+
+    @Value("${cloudinary.upload-preset}")
+    private String uploadPreset;
+
+    public String generarFirma(long timestamp, String folder) {
+        // String a firmar: folder=...&timestamp=...&upload_preset=...{API_SECRET}
+        String toSign = String.format(
+            "folder=%s&timestamp=%d&upload_preset=%s%s",
+            folder, timestamp, uploadPreset, apiSecret
+        );
+        return sha1(toSign);
+    }
+
+    private String sha1(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            byte[] hash = md.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String getApiKey() { return apiKey; }
+    public String getCloudName() { return cloudName; }
+}
+```
+
+#### Frontend — Componente de upload
+
+```jsx
+// components/ui/ImageUploader.jsx
+import { useState } from 'react';
+import api from '../hooks/useApi';
+
+export default function ImageUploader({ onUpload }) {
+  const [uploading, setUploading] = useState(false);
+  const [preview, setPreview] = useState(null);
+
+  async function handleFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Preview local inmediato
+    setPreview(URL.createObjectURL(file));
+    setUploading(true);
+
+    try {
+      // 1. Pedir firma al backend
+      const { data: firma } = await api.post('/vendedor/imagenes/firma');
+
+      // 2. Subir directo a Cloudinary
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', firma.apiKey);
+      formData.append('timestamp', firma.timestamp);
+      formData.append('signature', firma.signature);
+      formData.append('folder', firma.folder);
+      formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+
+      const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`;
+      const res = await fetch(cloudinaryUrl, { method: 'POST', body: formData });
+      const data = await res.json();
+
+      // 3. Pasar la URL al componente padre
+      onUpload(data.secure_url);
+    } catch (err) {
+      console.error('Error subiendo imagen:', err);
+      alert('No se pudo subir la imagen. Intentá de nuevo.');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div>
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        onChange={handleFile}
+        disabled={uploading}
+      />
+      {uploading && <p>Subiendo imagen...</p>}
+      {preview && (
+        <img src={preview} alt="Preview" style={{ width: 200, height: 200, objectFit: 'cover' }} />
+      )}
+    </div>
+  );
+}
+```
+
+```jsx
+// Uso en el formulario de listing
+function ListingForm() {
+  const [imagenUrl, setImagenUrl] = useState('');
+
+  return (
+    <form>
+      {/* otros campos */}
+      <ImageUploader onUpload={(url) => setImagenUrl(url)} />
+      <input type="hidden" name="imagenUrl" value={imagenUrl} />
+      <button type="submit">Publicar producto</button>
+    </form>
+  );
+}
+```
+
+#### Variables de entorno adicionales
+
+**Backend:**
+```properties
+cloudinary.cloud-name=${CLOUDINARY_CLOUD_NAME}
+cloudinary.api-key=${CLOUDINARY_API_KEY}
+cloudinary.api-secret=${CLOUDINARY_API_SECRET}
+cloudinary.upload-preset=hornet_listings
+```
+
+| Variable | Descripción |
+|----------|-------------|
+| `CLOUDINARY_CLOUD_NAME` | Nombre del cloud (Dashboard → Settings) |
+| `CLOUDINARY_API_KEY` | API Key (Dashboard → Settings → API Keys) |
+| `CLOUDINARY_API_SECRET` | API Secret (Dashboard → Settings → API Keys) |
+
+#### Notas importantes
+
+- **No guardar `API_SECRET` en el frontend nunca.** Por eso el backend genera la firma.
+- El campo `imagen_url` en la tabla `listings` guarda la `secure_url` que devuelve Cloudinary (siempre HTTPS).
+- Si el vendedor no sube imagen, `imagen_url` queda null y el frontend muestra un placeholder con gradiente de color según la categoría.
+- Cloudinary aplica automáticamente la transformación configurada en el preset: redimensiona a máximo 800×800px, optimiza calidad y convierte a WebP si el browser lo soporta.
