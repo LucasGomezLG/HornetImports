@@ -1,45 +1,17 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useActionState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { login } from "./actions";
 import styles from "./page.module.css";
+
+const INIT = { error: null };
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") ?? "/dashboard";
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      const msg = error.message;
-      setError(
-        msg === "Invalid login credentials"
-          ? "Email o contraseña incorrectos."
-          : msg === "Email not confirmed"
-          ? "Confirmá tu email antes de ingresar. Revisá tu bandeja de entrada."
-          : msg.includes("rate") || msg.includes("Too many")
-          ? "Demasiados intentos. Esperá unos minutos e intentá de nuevo."
-          : "Ocurrió un error. Intentá de nuevo."
-      );
-      setLoading(false);
-      return;
-    }
-
-    window.location.href = redirect;
-  }
+  const redirectTo = searchParams.get("redirect") ?? "/dashboard";
+  const [state, action, isPending] = useActionState(login, INIT);
 
   return (
     <div className={styles.page}>
@@ -55,17 +27,18 @@ function LoginForm() {
           <p className={styles.subtitle}>Bienvenido de vuelta</p>
         </div>
 
-        <form className={styles.form} onSubmit={handleSubmit}>
+        <form className={styles.form} action={action}>
+          <input type="hidden" name="redirectTo" value={redirectTo} />
+
           <div className={styles.field}>
             <label className={styles.label} htmlFor="email">Email</label>
             <input
               id="email"
               type="email"
+              name="email"
               className={styles.input}
               placeholder="tu@email.com"
               autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
@@ -80,19 +53,18 @@ function LoginForm() {
             <input
               id="password"
               type="password"
+              name="password"
               className={styles.input}
               placeholder="••••••••"
               autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
 
-          {error && <p className={styles.error}>{error}</p>}
+          {state.error && <p className={styles.error}>{state.error}</p>}
 
-          <button type="submit" className={styles.btnSubmit} disabled={loading}>
-            {loading ? "Ingresando..." : "Ingresar"}
+          <button type="submit" className={styles.btnSubmit} disabled={isPending}>
+            {isPending ? "Ingresando..." : "Ingresar"}
           </button>
         </form>
 
