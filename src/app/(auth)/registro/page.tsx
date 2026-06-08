@@ -32,7 +32,7 @@ export default function RegistroPage() {
       password,
       options: {
         data: { tipo, nombre: nombre.trim() },
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
       },
     });
 
