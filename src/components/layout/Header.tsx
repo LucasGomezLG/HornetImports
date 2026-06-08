@@ -119,35 +119,17 @@ export default function Header({ user: initialUser }: { user?: AuthUser | null }
 
   const close = () => setMenuOpen(false);
 
-  // Verificar sesión en el cliente para garantizar estado correcto
-  // sin depender del caché del servidor
+  // Sincronizar con el prop del servidor cuando cambia (navegación)
+  useEffect(() => {
+    setUser(initialUser ?? null);
+  }, [initialUser]);
+
+  // Detectar logout del cliente para limpiar el estado inmediatamente
   useEffect(() => {
     const supabase = createClient();
-
-    async function syncUser() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { setUser(null); return; }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("nombre, tipo")
-        .eq("id", session.user.id)
-        .single();
-
-      if (profile) {
-        setUser({
-          nombre: profile.nombre ?? session.user.email?.split("@")[0] ?? "Mi cuenta",
-          tipo: profile.tipo,
-        });
-      }
-    }
-
-    syncUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      syncUser();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") setUser(null);
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
